@@ -10,6 +10,62 @@ This repo contains all the R coded needed to generate pre-COP25 one pagers. To g
 
 To maintain consistency and high-quality contributions, please follow the guidelines below.
 
+### 0. Properly Configure Your Repo
+
+Here are the steps and corresponding code chunks to create a new development branch in Git. These commands will help you set up and switch to a new branch for development purposes.
+
+##### 1. **Ensure Your Local Repository is Up-to-Date**
+
+Before creating a new branch, update your local repository to make sure it’s in sync with the remote repository.
+
+``` bash
+git pull origin main
+```
+
+Replace `main` with the name of your default branch if it’s different (e.g., `master`).
+
+##### 2. **Create a New Branch**
+
+Use the following command to create a new branch. Replace `dev_branch_name` with your desired branch name.
+
+``` bash
+git branch dev_branch_name
+```
+
+##### 3. **Switch to the New Branch**
+
+After creating the branch, switch to it with the following command:
+
+``` bash
+git checkout dev_branch_name
+```
+
+Alternatively, you can create and switch to the branch in one step:
+
+``` bash
+git checkout -b dev_branch_name
+```
+
+##### 4. **Push the New Branch to the Remote Repository**
+
+To make the branch available for others to see and use, push it to the remote repository.
+
+``` bash
+git push -u origin dev_branch_name
+```
+
+The `-u` flag sets `origin dev_branch_name` as the default remote branch, making future `git push` and `git pull` commands simpler.
+
+##### 5. **Confirm the Branch Creation**
+
+List all branches to confirm that your new branch has been created and switched to:
+
+``` bash
+git branch
+```
+
+This sequence sets up a new development branch locally and on the remote repository, allowing you to start making changes isolated from the main branch.
+
 ### 1. List of Countries to Loop Over
 
 Dynamic paths allow the code to run seamlessly on different machines and environments without needing manual adjustments. Instead of hardcoding file paths, use relative paths or environment variables. This is especially helpful in collaborative projects where contributors may have different directory structures. For instance:
