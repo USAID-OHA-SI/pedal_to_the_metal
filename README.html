@@ -415,24 +415,36 @@ remote repository, allowing you to start making changes isolated from
 the main branch.</p>
 </div>
 </div>
-<div id="list-of-countries-to-loop-over" class="section level3">
-<h3>1. List of Countries to Loop Over</h3>
+<div id="use-dynamic-paths-metadata" class="section level3">
+<h3>1. Use Dynamic Paths &amp; Metadata</h3>
 <p>Dynamic paths allow the code to run seamlessly on different machines
 and environments without needing manual adjustments. Instead of
-hardcoding file paths, use relative paths or environment variables. This
-is especially helpful in collaborative projects where contributors may
-have different directory structures. For instance:</p>
+hardcoding file paths and metadata, use relative paths and the
+<code>get_metadata</code> function to store period specific information.
+This is especially helpful in collaborative projects where contributors
+may have different directory structures. For instance:</p>
+<pre class="r"><code>  #file path to dataset
+  path_msk &lt;- glamr::si_path() %&gt;% glamr::return_latest(&quot;TRAINING&quot;)
+  
+  #read in the training data PSD
+  df_msk &lt;- gophr::read_psd(path_msk)
+
+  #extract msk metadata
+  meta &lt;- gophr::get_metadata(path_msk)
+  </code></pre>
 <p>This approach helps the code remain portable, making it easy to clone
 the repository and run the analysis without needing to adjust paths.</p>
 </div>
-<div id="list-of-countries-to-loop-over-1" class="section level3">
+<div id="list-of-countries-to-loop-over" class="section level3">
 <h3>2. List of Countries to Loop Over</h3>
 <p>This project is limited to all PEPFAR countries preparing a COP. To
 create this list, use the code chunk below:</p>
-<pre class="r"><code># Pull the list of OUs for which visuals need to be generated
+<pre class="r"><code>
+# Pull the list of OUs for which visuals need to be generated
 cop_ous &lt;- glamr::pepfar_country_list %&gt;% 
   filter(str_detect(operatingunit, &quot;Region&quot;, negate = T)) %&gt;% 
-  pull(operatingunit)</code></pre>
+  pull(operatingunit)
+  </code></pre>
 </div>
 <div id="set-up-script-to-work-for-one-country" class="section level3">
 <h3>3. Set Up Script to Work for One Country</h3>
@@ -524,8 +536,10 @@ maintain a unified and polished appearance.</p>
 branch for UNAIDS data. If you find yourself in need of using the latest
 UNAIDS data, please re-install <code>mindthegap</code> from the
 <code>dev_edms</code> branch.</p>
-<pre class="r"><code>  # install UNAIDS package from dev_edms branch
-  remotes::install_github(&quot;USAID-OHA-SI/mindthegap&quot;, ref = &quot;dev_edms&quot;)</code></pre>
+<pre class="r"><code>
+  # install UNAIDS package from dev_edms branch
+  remotes::install_github(&quot;USAID-OHA-SI/mindthegap&quot;, ref = &quot;dev_edms&quot;)
+  </code></pre>
 <hr />
 <p><em>Disclaimer: The findings, interpretation, and conclusions
 expressed herein are those of the authors and do not necessarily reflect

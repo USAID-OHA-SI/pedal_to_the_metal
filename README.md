@@ -66,9 +66,21 @@ git branch
 
 This sequence sets up a new development branch locally and on the remote repository, allowing you to start making changes isolated from the main branch.
 
-### 1. List of Countries to Loop Over
+### 1. Use Dynamic Paths & Metadata
 
-Dynamic paths allow the code to run seamlessly on different machines and environments without needing manual adjustments. Instead of hardcoding file paths, use relative paths or environment variables. This is especially helpful in collaborative projects where contributors may have different directory structures. For instance:
+Dynamic paths allow the code to run seamlessly on different machines and environments without needing manual adjustments. Instead of hardcoding file paths and metadata, use relative paths and the `get_metadata` function to store period specific information. This is especially helpful in collaborative projects where contributors may have different directory structures. For instance:
+
+``` r
+  #file path to dataset
+  path_msk <- glamr::si_path() %>% glamr::return_latest("TRAINING")
+  
+  #read in the training data PSD
+  df_msk <- gophr::read_psd(path_msk)
+
+  #extract msk metadata
+  meta <- gophr::get_metadata(path_msk)
+  
+```
 
 This approach helps the code remain portable, making it easy to clone the repository and run the analysis without needing to adjust paths.
 
@@ -77,10 +89,12 @@ This approach helps the code remain portable, making it easy to clone the reposi
 This project is limited to all PEPFAR countries preparing a COP. To create this list, use the code chunk below:
 
 ``` r
+
 # Pull the list of OUs for which visuals need to be generated
 cop_ous <- glamr::pepfar_country_list %>% 
   filter(str_detect(operatingunit, "Region", negate = T)) %>% 
   pull(operatingunit)
+  
 ```
 
 ### 3. Set Up Script to Work for One Country
@@ -134,8 +148,10 @@ All text should use the Source Sans Pro typeface to maintain consistency with UN
 The `dev_edms` branch is currently the active development branch for UNAIDS data. If you find yourself in need of using the latest UNAIDS data, please re-install `mindthegap` from the `dev_edms` branch.
 
 ``` r
+
   # install UNAIDS package from dev_edms branch
   remotes::install_github("USAID-OHA-SI/mindthegap", ref = "dev_edms")
+  
 ```
 
 ------------------------------------------------------------------------
