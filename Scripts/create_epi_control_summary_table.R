@@ -113,7 +113,7 @@
       filter(indicator %in% c("Number Total Deaths to HIV Population", "Number New HIV Infections", "Incidence mortality ratio (IMR)")) %>%
       select(country, iso, indicator, estimate) %>%
       pivot_wider(names_from = "indicator", values_from = estimate) %>%
-      rename_with(~ str_replace_all(., c(`.*Deaths.*` = "Deaths", `.*Infections.*` = "New Infections", `.*IMR.*` = "IMR"))) %>%
+      rename_with(~ str_replace_all(., c(`.*Deaths.*` = "Deaths", `.*Infections.*` = "New Infections", `.*IMR.*` = "Incidence Mortality Rate"))) %>%
       pivot_longer(cols = where(is.double)) %>%
       mutate(value_formatted = if_else(
         is.numeric(value) & value >= 1000,
