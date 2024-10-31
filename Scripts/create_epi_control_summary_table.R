@@ -176,7 +176,7 @@
   
   cntry_list <- df %>%
     distinct(country) %>%
-    slice(1:10) %>%
     pull()
   
+  # Check'em all!
   map(cntry_list, .f = ~ create_epi_tbl(.x))
