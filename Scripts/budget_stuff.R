@@ -83,14 +83,14 @@
   plot_bdgt_trend <- function(df){
     df %>% 
       ggplot(aes(fiscal_year, cop_budget_total, fill = fundingagency)) +
-      geom_col(position = "identity", color = hunter, linewidth = 1.2) +
-      geom_text(aes(label = pt_label), na.rm = TRUE, color = hunter,
+      geom_col(position = "identity", color = si_palettes$hunter_t[3], linewidth = 1.2) +
+      geom_text(aes(label = pt_label), na.rm = TRUE, color = si_palettes$hunter_t[3],
                 family = "Source Sans Pro", vjust = -.4) +
       scale_y_continuous(label = label_currency(scale = 1e-6, suffix = "M")) +
       scale_fill_manual(values = c("PEPFAR" = grey20k,
-                                   "USAID" = hunter)) +
+                                   "USAID" = si_palettes$hunter_t[3])) +
       labs(x = NULL, y = NULL,
-           title = glue("<span style = 'color:{hunter};'>USAID'S</span> SHARE OF THE TOTAL PEPFAR BUDGET"),
+           title = glue("<span style = 'color:{si_palettes$hunter_t[3]};'>USAID'S</span> SHARE OF THE TOTAL PEPFAR BUDGET"),
            caption = "Note: Includes SCH") +
       si_style_ygrid() +
       theme(axis.text.y = element_blank(),
@@ -165,7 +165,7 @@
         locations = cells_body(columns = direction),
         fn = function(x) {
           case_when(
-            x == "increase" ~ fa("chevron-up", fill = hunter) %>% as.character,
+            x == "increase" ~ fa("chevron-up", fill = si_palettes$hunter_t[3]) %>% as.character,
             x == "decrease" ~ fa("chevron-down", fill = orchid_bloom) %>% as.character,
             x == "flat"     ~ fa("chevron-right", fill = grey20k) %>% as.character
           )
@@ -232,13 +232,13 @@
     df_lp %>% 
       ggplot(aes(cop_budget_total, country, fill = local_prime_partner)) +
       geom_col() +
-      scale_fill_manual(values = c("Local" = hunter, 
+      scale_fill_manual(values = c("Local" = si_palettes$hunter_t[3], 
                                    "International" = grey20k, 
                                    "Unknown"= grey30k)) +
-      geom_text(aes(label = pt_label), na.rm = TRUE, color = hunter,
+      geom_text(aes(label = pt_label), na.rm = TRUE, color = si_palettes$hunter_t[3],
                 family = "Source Sans Pro", hjust = -.4) +
       labs(x = NULL, y = NULL,
-           title = glue("BUDGET SHARE GOING TO <span style = 'color:{hunter};'>LOCAL PARTNERS</span>"),
+           title = glue("BUDGET SHARE GOING TO <span style = 'color:{si_palettes$hunter_t[3]};'>LOCAL PARTNERS</span>"),
            subtitle = glue("FY{str_sub(df_lp$fiscal_year, -2)} Budget [{unkwn_share} classified as local or international]"),
            caption = "Note: Includes SCH") +
       si_style_nolines() +
