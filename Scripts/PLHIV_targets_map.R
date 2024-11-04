@@ -35,7 +35,7 @@
     ref_id <- "fde3ca9c"
     
   # Functions
-    #Loop over list of countries  
+    #list of countries  
     cop_ous <- glamr::pepfar_country_list %>% 
       filter(str_detect(operatingunit, "Region", negate = T)) %>% 
       pull(operatingunit)
@@ -115,20 +115,20 @@
     
     #2023 PLHIV targets
       #South Africa example
-    df_psnu_plhiv_geo %>%
-      filter(operatingunit == "South Africa",
-             fiscal_year == "2023") %>% #range 3k-750k
-      ggplot() + 
-      geom_sf(aes(fill = targets), color = grey80k, size = .1) +
-      scale_fill_si(palette = "hunter_c", discrete = F, reverse = T,
+    #df_psnu_plhiv_geo %>%
+     # filter(operatingunit == "South Africa",
+      #       fiscal_year == "2023") %>% #range 3k-750k
+      #ggplot() + 
+      #geom_sf(aes(fill = targets), color = grey80k, size = .1) +
+      #scale_fill_si(palette = "hunter_c", discrete = F, reverse = T,
                     #labels = ~label_number(scales_cut = cut_short_scale())(abs(.))
-                    labels = label_number(scale = 1, big.mark = ",")
-                                          ) + 
-      si_legend_fill() + 
-      si_style_map() + 
-      labs(title = "PSNU MAP OF PLHIV TARGETS", 
-           caption = glue("{meta$caption}")) +
-      theme(legend.text = element_text(size = 7)) 
+       #             labels = label_number(scale = 1, big.mark = ",")
+      #                                    ) + 
+      #si_legend_fill() + 
+      #si_style_map() + 
+      #labs(title = "PSNU MAP OF PLHIV TARGETS", 
+       #    caption = glue("{meta$caption}")) +
+      #theme(legend.text = element_text(size = 7)) 
     
     
     #Define the function to plot for a specific country
