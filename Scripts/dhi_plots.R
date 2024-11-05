@@ -67,14 +67,32 @@
            funding_agency = fct_relevel(funding_agency, "USAID") %>% fct_rev(),
            fill_color = fct_rev(fill_color))
   
+  v_subt <- df_sys %>% 
+    filter(country == "Tanzania",
+           funding_agency %in% c("USAID", "PEPFAR")) %>% 
+    mutate(agency_anno = glue("**<span style = 'color:{fill_color};'>{funding_agency}</span>** - Budget: {label_currency(.1, scale_cut = cut_si(''))(estimated_budget)} | Systems: {label_number(1)(n_systems)} | Activities: {label_number(1)(n_activities)}")) %>% 
+    arrange(funding_agency) %>% 
+    pull() %>% 
+    paste(collapse = "<br>")
+    
+    
+
   df_sys %>% 
     filter(country == "Tanzania",
            funding_agency != "PEFPAR") %>% 
+    mutate(share = estimated_budget/ sum(estimated_budget),
+           share = case_when(funding_agency == "USAID" ~ share)) %>% 
     ggplot(aes(estimated_budget, country, fill = fill_color)) +
+    # geom_col(position = "fill") +
     geom_col() +
+    geom_text(aes(label = label_percent()(share)), na.rm = TRUE,
+              family = "Source Sans Pro", hjust = -.3) +
     scale_fill_identity() +
-    labs(x = NULL, y = NULL) +
-    si_style_nolines() 
+    labs(x = NULL, y = NULL,
+         subtitle = v_subt) +
+    si_style_nolines() +
+    theme(axis.text = element_blank(),
+          plot.subtitle = element_markdown())
   
 
   df_sys_cat <- df_dhi %>% 
@@ -94,16 +112,28 @@
     group_by(fiscal_year, country, funding_agency) %>%
     mutate(share = estimated_budget /sum(estimated_budget)) %>% 
     ungroup() %>% 
-    filter(funding_agency %in% c("USAID", "CDC"))
+    filter(funding_agency %in% c("USAID", "CDC")) %>% 
+    mutate(fill_color = ifelse(funding_agency == "USAID", si_palettes$hunter_t[3], "gray80"))
 
+  
+  # df_sys_cat %>% 
+  #   ggplot(aes(share)) +
+  #   geom_histogram()
+  
   df_sys_cat %>% 
     filter(country == "Tanzania") %>% 
     mutate(primary_system_category = fct_reorder(primary_system_category, estimated_budget, sum),
            primary_system_category = fct_relevel(primary_system_category, "Other", after = 0)) %>% 
-    ggplot(aes(share, funding_agency, fill = primary_system_category)) +
+    ggplot(aes(share, funding_agency, fill = fill_color)) +
     geom_col() +
+    geom_text(aes(label = label_percent(1)(share)),
+              na.rm = TRUE, hjust = -.3,
+              family = "Source Sans Pro", color = matterhorn) +
     facet_grid(~fct_rev(primary_system_category)) +
-    labs(x = NULL, y = NULL) +
+    labs(x = NULL, y = NULL,
+         title = "Agency share of investments by HIS category" %>% toupper) +
+    scale_fill_identity() +
+    coord_cartesian(clip = "off") +
     si_style_nolines() +
     theme(axis.text.x = element_blank(),
           legend.position = "none")
