@@ -20,116 +20,99 @@
   library(glue)
   library(gt)
   library(gtExtras)
+  remotes::install_github("USAID-OHA-SI/mindthegap", ref = "dev_edms") #install UNAIDS package from dev_edms branch
+  library(mindthegap)
     
-  # SI specific paths/functions  
-    load_secrets()
-    merdata <- file.path(glamr::si_path("path_msd"))
-      
-  # Grab metadata
-   get_metadata(file_path)
   
   # REF ID for plots
     ref_id <- "06c95022"
     
   # Functions  
-  
+    #list of countries  
+    cop_ous <- glamr::pepfar_country_list %>% 
+      filter(str_detect(operatingunit, "Region", negate = T)) %>% 
+      pull(operatingunit)
 
 # LOAD DATA ============================================================================  
 
-  #install UNAIDS package from dev_edms branch
-    remotes::install_github("USAID-OHA-SI/mindthegap", ref = "dev_edms")
-    
     df_tt <- mindthegap::load_unaids(pepfar_only = T) %>% 
-      dplyr::filter(indicator_type == "Percent")
+      dplyr::filter(indicator_type == "Percent", 
+                    year == 2023)
     
-    View(df_tt)
 
 # MUNGE ============================================================================
   
-  #Key Epi Gaps
-    #Limit Test and Treat data
-      #note: percent indicators - sex disagg only for adults (15+), not children (<15)
-    df_rel_lim <- 
-      df_tt %>% 
-      filter(year == 2023,
-             indicator %in% c("Percent Known Status of PLHIV", #using rel base indicators
+    prep_tt_tbl <- function(df, cntry) {
+      
+      #Limit the data
+    df_rel_lim <- df %>% 
+      filter(country == cntry,
+             indicator %in% c("Percent Known Status of PLHIV", 
                               "Percent on ART with Known Status",
                               "Percent VLS on ART"), 
-             sex != "All") %>% 
-      select(year, country, indicator, estimate, lower_bound, upper_bound, 
-             age, sex)
+             !(sex == "All" & age == "All"),
+             ! (sex == "All" & age == "15+")) %>% 
+      select(country, indicator,age, sex, estimate) %>% 
+      mutate(share = estimate/100,
+             flag = share >= 0.95) 
+    
+    df_viz <- df_rel_lim%>% 
+      mutate(stroke_color = ifelse(flag == TRUE, glitr::hw_orchid_bloom, glitr::hw_hunter),
+             age_sex = glue("{age} {sex}"),
+             indic_age_sex = glue("{indicator} {age} {sex}"),
+             indic_age_sex = fct_relevel(indic_age_sex,
+                                         c("Percent VLS on ART 15+ Female", "Percent VLS on ART 15+ Male",
+                                           "Percent VLS on ART 0-14 All",
+                                           "Percent on ART with Known Status 15+ Female", "Percent on ART with Known Status 15+ Male",
+                                           "Percent on ART with Known Status 0-14 All",
+                                           "Percent Known Status of PLHIV 15+ Female", "Percent Known Status of PLHIV 15+ Male", 
+                                           "Percent Known Status of PLHIV 0-14 All"))) %>% 
+      mutate(indicator = case_when(str_detect(indicator, "PLHIV") ~ "Known Status",
+                                   str_detect(indicator, "on ART with Known Status") ~ "On ART",
+                                   str_detect(indicator, "VLS") ~ "VLS", 
+                                   TRUE ~ "")) 
+    
+    return(df_viz)
+    }
+    
+    df_sa <- prep_tt_tbl(df_tt, "South Africa")  
+    
   
 # VIZ ============================================================================
 
   #Lollipop Plot 
       #3 stacked plots of Known Status, On ART, VLS
       #broken out by age (0-14, 15+) and sex (male, female)
+      #note: sex disagg only for adults (15+), not children (<15)
     
-    df_viz <- df_rel_lim %>% 
-      filter(country == "South Africa") %>% 
-      mutate(share = estimate/100,
-             share_low = lower_bound/100, share_up = upper_bound/100,
-             flag = share <= 0.95) %>% 
-      arrange(desc(share))
-    
-    #Version 1- Male/Female on the same x-axis
-    df_viz %>% 
-      mutate(population = if_else(sex == "Female", -share, share),
-             indicator = factor(indicator, levels = c("Percent VLS on ART",
-                                                      "Percent on ART with Known Status",
-                                                      "Percent Known Status of PLHIV")),
-             sex_color = ifelse(sex == "Male", glitr::hunter, glitr::orchid_bloom)) %>% 
-      ggplot(aes(x = share, y = indicator)) + 
-      geom_segment(aes(x = share_low, xend = share_up, yend = indicator, color = glitr::whisper), size = 2) + #lollipop line
-      geom_point(aes(x = share, color = sex_color),size = 3) + #lollipop points
-      geom_vline(xintercept = 0.95, linetype = "dashed", color = slate)+
-      scale_y_discrete(label = c("VLS",
-                                 "On ART",
-                                 "Known Status")) + 
-      scale_x_continuous(labels = percent, limits = c(.5,1)) + 
-      scale_color_identity()+ 
-      si_style_xgrid()+
-      theme(plot.subtitle = element_markdown()) + 
-      labs(x = NULL, y = NULL,
-           title = "KEY EPI GAPS",
-           caption = glue("{mindthegap::source_note}"))
-    
-    #Version 2 - split axis by Male vs Female 
-    df_viz %>% 
-      mutate(population = if_else(sex == "Female", -share, share),
-             indicator = factor(indicator, levels = c("Percent VLS on ART",
-                                                      "Percent on ART with Known Status",
-                                                      "Percent Known Status of PLHIV")),
-             sex_color = ifelse(sex == "Male", glitr::hunter, glitr::orchid_bloom)) %>% 
-      ggplot(aes(x = population, y = indicator)) + 
-      geom_segment(data = df_viz %>% filter(sex == "Female"), 
-                   aes(x = -share_up, xend = -share_low, 
-                       yend = indicator, color = glitr::whisper), size = 4) + # female segments
-      geom_segment(data = df_viz %>% filter(sex == "Male"), 
-                   aes(x = share_low, xend = share_up, 
-                       yend = indicator, color = glitr::whisper), size = 4) + # male segments
-      #geom_segment(aes(x = -share_up, xend = -share_low, 
-       #                yend = indicator, color = glitr::whisper), size = 2) + #lollipop line
-      geom_point(aes(x = population, color = sex_color),size = 4) + #lollipop points
-      geom_vline(xintercept = 0, linetype = "dashed", color = slate)+ #vertical line at 0
-      scale_y_discrete(label = c("VLS",
-                                 "On ART",
-                                 "Known Status")) + 
-      scale_x_continuous(labels = percent,
-                         limits = c(-1,1)
-                         #breaks = seq(-1,1,0.75)
-                         ) + 
-      scale_color_identity()+ 
-      si_style_xgrid()+
-      theme(plot.subtitle = element_markdown()) + 
-      labs(x = NULL, y = NULL,
-           title = "KEY EPI GAPS",
-           subtitle = glue("<span style= 'color:{hunter};'>Male</span> and
-                           <span style= 'color:{orchid_bloom};'>Female</span>
-                           Adults (15+) progress towards 95-95-95s"),
-           caption = glue("{mindthegap::source_note} | Ref ID: {ref_id}"))
-    
+    plot_epi_gaps <- function(df) {
       
+      #df <- df_viz %>% 
+        #filter(country == cntry)
+      
+      ggplot(df,
+             aes(x = share, y = indic_age_sex, color = stroke_color)) + 
+      geom_vline(xintercept = 0.95, linetype = "dashed", color = slate) +
+      geom_segment(aes( x = .95, xend = share, yend = indic_age_sex),
+                   linewidth = 1, alpha = .6) + 
+      geom_point(size = 3) + 
+      scale_x_continuous(labels = percent, expand = c(0.05, .05)) + 
+      scale_y_discrete(labels = setNames(df$age_sex, df$indic_age_sex)) + 
+      geom_text(data = df %>% group_by(indicator) %>% 
+                  slice(1),
+                aes(label=indicator, x = .98, color = "black"),
+                family = "Source Sans Pro", size = 4, vjust = -.6) + 
+      scale_color_identity()+ 
+      si_style_xgrid()+
+      labs(x = NULL, y = NULL,
+           title = glue("KEY EPI GAPS"),
+           caption = glue("{mindthegap::source_note} | Ref ID: {ref_id}"))
+  
+    }
+      
+
+    plot_epi_gaps(df_sa)
 
 # SPINDOWN ============================================================================
 
+    
