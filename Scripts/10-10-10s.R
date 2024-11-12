@@ -59,10 +59,10 @@
 # MUNGE ============================================================================
   
   #Prep data 
-    prep_10s_barriers <- function(df, cntry) {
+    prep_10s_barriers <- function(df) {
       
-      if(cntry %ni% unique(df$country))
-        return(NULL)
+      #if(cntry %ni% unique(df$country))
+       # return(NULL)
       
       #select just the policy structural indicators
       ind_sel <- c(paste0("S", 1:6), "S9")
@@ -92,7 +92,8 @@
       #aggregate adoption across PEPFAR countries
       df_viz <- df_struct %>% 
         dplyr::filter(year == "Most recent",
-                      country == cntry) %>% 
+                      #country == cntry
+                      ) %>% 
         dplyr::count(country, adoption_level, indicator_name) #%>% 
         #dplyr::filter(!is.na(adoption_level))
       
@@ -111,20 +112,23 @@
     }
     
       
-      df_sa <- prep_10s_barriers(df_tens, "South Africa")
-      df_bw <- prep_10s_barriers(df_tens, "Botswana")
-      
+      #df_sa <- prep_10s_barriers(df_tens, "South Africa")
+      #df_bw <- prep_10s_barriers(df_tens, "Botswana")
+      df_viz <- prep_10s_barriers(df_tens)
       
   
 # VIZ ============================================================================
 
   #Bar chart 
-    viz_10s_barriers <- function(df) {
+    viz_10s_barriers <- function(df, cntry) {
       
       q <- glue::glue("What gaps exists in adopting structural laws/policies towards UNAIDS' 10-10-10 goals?") %>% toupper
       
       if(is.null(df) || nrow(df) == 0)
         return(dummy_plot(q))
+      
+      #Filter the dataframe by the specified country
+      df <- df %>% dplyr::filter(country == cntry)
       
       ref_id <- "1b6b1dd7" #update plot identification
       
@@ -145,17 +149,21 @@
       
     }
       
-        viz_10s_barriers(df_sa)
-        viz_10s_barriers(df_bw)
+        #viz_10s_barriers(df_sa)
+        #viz_10s_barriers(df_bw)
+      viz_10s_barriers(df_viz, "South Africa")
       
 # Icon Version  ------------------------------------------------------------------
         #use shapes instead of bars
-        plot_viz_10s <- function(df) {
+        plot_viz_10s <- function(df, cntry) {
           
           q <- glue::glue("THE LARGEST GAPS IN THE 10-10-10 GOALS IN {df$country}") %>% toupper
           
           if(is.null(df) || nrow(df) == 0)
             return(dummy_plot(q))
+          
+          #Filter the dataframe by the specified country
+          df <- df %>% dplyr::filter(country == cntry)
           
           ref_id <- "1b6b1dd7" #update plot identification
           
@@ -179,10 +187,10 @@
           
         }
         
-        plot_viz_10s(df_sa)
-        plot_viz_10s(df_bw)
+        #plot_viz_10s(df_sa)
+        #plot_viz_10s(df_bw)
         
-      
+      plot_viz_10s(df_viz, "South Africa")
       
         
 

@@ -44,7 +44,7 @@
   
     prep_tt_tbl <- function(df) {
       
-      #Limit the data
+    #Limit the data
     df_rel_lim <- df %>% 
       filter(#country == cntry,
              indicator %in% c("Percent Known Status of PLHIV", 
@@ -57,7 +57,22 @@
       mutate(share = estimate/100,
              flag = share >= 0.95) 
     
+    #Define the required combinations of indicator, age, and sex
+    required_combinations <- expand.grid(
+      indicator = c("Percent Known Status of PLHIV", 
+                    "Percent on ART with Known Status",
+                    "Percent VLS on ART"),
+      age = c("0-14", "15+", "All"),
+      sex = c("Female", "Male", "All"),
+      stringsAsFactors = FALSE
+    )
+    
     df_viz <- df_rel_lim%>% 
+      tidyr::complete(country, indicator, age, sex, fill = list(estimate = NA)) %>% 
+      dplyr::right_join(required_combinations, by = c("indicator", "age", "sex")) %>% 
+      filter(!(sex == "All" & age == "15+"),
+             !(age == "0-14" & sex %in% c("Male", "Female"))
+             ) %>% 
       mutate(stroke_color = ifelse(flag == TRUE, glitr::hw_orchid_bloom, glitr::hw_hunter),
              age_sex = glue("{age} {sex}"),
              indic_age_sex = glue("{indicator} {age} {sex}"),
@@ -94,7 +109,8 @@
     plot_epi_gaps <- function(df, cntry) {
       
       df <- df_viz %>% 
-        filter(country == cntry)
+        filter(country == cntry,
+               ! (sex == "All" & age == "15+"))
       
       ggplot(df,
              aes(x = share, y = indic_age_sex, color = stroke_color)) + 
