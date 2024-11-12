@@ -25,7 +25,7 @@
   
   ref_id <- "05e50315"  #a reference to be places in viz captions 
   
-  path_hrh <-  si_path() %>% return_latest("HRH.*not_redacted")
+  path_hrh <-  si_path() %>% return_latest("HRH.*not_redacted.*txt")
   
   meta <- get_metadata(path_hrh)  #extract MSD metadata
   
@@ -69,7 +69,7 @@
                               label_number(.1, scale_cut = cut_si(''))(value)),
              val_fmt = ifelse(value < 1e3, as.character(value), val_fmt),
              fill_color = ifelse(funding_agency ==  "USAID", 
-                                 si_palettes$hunter_t[3], grey20k))
+                                 si_palettes$hunter_t[1], slate))
     
     return(df_hrh_v)
   }
@@ -89,7 +89,7 @@
       mutate(type = str_extract(type, "Staff|Expenditure")) %>% 
       pivot_wider(names_from = type) %>% 
       group_by(funding_agency) %>% 
-      mutate(agency_anno = glue("**<span style = 'color:{fill_color};'>{funding_agency}</span>** - Staff: {label_number(.1, scale_cut = cut_si(''))(sum(Staff))} | Expenditure: {label_currency(.1, scale_cut = cut_si(''))(sum(Expenditure))}")) %>% 
+      mutate(agency_anno = glue("**<span style = 'color:{fill_color};'>{funding_agency}</span>** - Staff: {label_number(.1, scale_cut = cut_si(''))(sum(Staff))} | Exp: {label_currency(.1, scale_cut = cut_si(''))(sum(Expenditure))}")) %>% 
       ungroup() %>% 
       arrange(desc(funding_agency)) %>% 
       pull() %>% 
@@ -98,8 +98,9 @@
     #plot 
     v <- df_hrh_v_cntry %>% 
       ggplot(aes(value, fct_reorder(er_category, ordering, .fun = sum), fill = fill_color)) +
-      geom_col() +
-      geom_text(aes(label = val_fmt), hjust = -.3,
+      geom_blank(aes(x = value*1.2)) +
+      geom_col(width = 0.9) +
+      geom_text(aes(label = val_fmt), hjust = -.15,
                 family = "Source Sans Pro", color = matterhorn) +
       facet_grid(fct_rev(funding_agency) ~ fct_rev(type), scales = "free_x", switch = "y") +
       scale_x_continuous(labels = label_number(.1, scale_cut = cut_si(''))) +
@@ -112,25 +113,26 @@
       theme(strip.text = element_text(hjust = .5),
             strip.placement = "outside",
             axis.text.x = element_blank(),
-            plot.subtitle = element_markdown())
+            plot.subtitle = element_markdown(), 
+            panel.spacing = unit(.25, "line"))
     
     if(export)
-      si_save(v, glue("{cntry}_hrh.png"), path = "Images")
-    
+      # si_save(v, glue("{cntry}_hrh.png"), path = "Images")
+    print(glue("{cntry}"))
     return(v)
   }
   
   
   
   #test
-  # df_hrh_plot <- prep_hrh(df_hrh)
-  # 
-  # v_countries <- pepfar_country_list %>% 
-  #   filter(str_detect(operatingunit, "Region", negate = TRUE)) %>% 
-  #   pull(country)
-  # 
-  # map(v_countries[16:20], 
-  #      ~plot_hrh(df_hrh_plot, .x, FALSE))  
+  df_hrh_plot <- prep_hrh(df_hrh)
 
+  v_countries <- pepfar_country_list %>%
+    filter(str_detect(operatingunit, "Region", negate = TRUE)) %>%
+    pull(country)
 
-  
+  map(v_countries[17],
+       ~plot_hrh(df_hrh_plot, .x, F))
+  si_save("Images/rwa_hrh.png", scale = 0.5)
+si_preview(scale = 0.5)
+
