@@ -4,7 +4,7 @@
 # REF ID:   22955bf0 
 # LICENSE:  MIT
 # DATE:     2024-11-05
-# UPDATED: 
+# UPDATED:  2024-11-12
 
 # DEPENDENCIES ------------------------------------------------------------
   
@@ -20,6 +20,8 @@
   library(tidytext)
   library(patchwork)
   library(ggtext)
+
+  source("Scripts/save_png.R")
   
 
 # GLOBAL VARIABLES --------------------------------------------------------
@@ -27,115 +29,166 @@
   ref_id <- "22955bf0"  #a reference to be places in viz captions 
   
   path_dhi <-  si_path() %>% return_latest("DHI.*Detailed")
-  path_dhi_sum <-  si_path() %>% return_latest("DHI.*Summary")
   
+  v_countries <- pepfar_country_list %>%
+    filter(str_detect(operatingunit, "Region", negate = TRUE)) %>%
+    pull(country)
   
 # IMPORT ------------------------------------------------------------------
   
   df_dhi <- vroom(path_dhi)
-  df_dhi_sum <- vroom(path_dhi_sum)
   
 
-# MUNGE -------------------------------------------------------------------
+# EXPLORE -----------------------------------------------------------------
 
-  unique(df_dhi$dhi_question_code)
-  unique(df_dhi$primary_system_category)
+  # unique(df_dhi$dhi_question_code)
+  # unique(df_dhi$primary_system_category)
+  # 
+  #   tibble(primary_system_category = unique(df_dhi$primary_system_category)) %>% 
+  #     mutate(new = ifelse(str_detect(primary_system_category, "\\)$"),
+  #                         str_extract(primary_system_category, "(?<=\\().*(?=\\))"),
+  #                         "Other")) %>% 
+  #     arrange(desc(new)) %>% 
+  #     prinf()
+  # 
   
-    tibble(primary_system_category = unique(df_dhi$primary_system_category)) %>% 
-      mutate(new = ifelse(str_detect(primary_system_category, "\\)$"),
-                          str_extract(primary_system_category, "(?<=\\().*(?=\\))"),
-                          "Other")) %>% 
-      arrange(desc(new)) %>% 
-      prinf()
+
+# DHI OVERVIEW ------------------------------------------------------------
+
+  prep_dhi_overview <- function(df){
+    df_sys <- df %>% 
+      bind_rows(df %>% 
+                  mutate(funding_agency = "PEPFAR")) %>% 
+      rename(fiscal_year = dhi_submission_fiscal_year) %>% 
+      clean_agency() %>% 
+      filter(fiscal_year == max(fiscal_year),
+             dhi_question_code == "estimated_budget") %>% 
+      mutate(estimated_budget = as.numeric(response_option_desc)) %>% 
+      group_by(fiscal_year, country, funding_agency) %>% 
+      summarise(estimated_budget = sum(estimated_budget, na.rm = TRUE),
+                n_systems = n_distinct(discrete_system_id),
+                n_activities = n(),
+                .groups = "drop") 
+    
+    df_sys <- df_sys %>% 
+      mutate(budget_share = case_when(funding_agency != "PEPFAR" ~ estimated_budget)) %>% 
+      group_by(country) %>% 
+      mutate(budget_share = budget_share/ sum(budget_share, na.rm = TRUE),
+             budget_share = case_when(funding_agency == "USAID" ~ budget_share)) %>% 
+      ungroup()
+    
+    df_sys <- df_sys %>%
+      mutate(fill_color = ifelse(funding_agency == "USAID", si_palettes$hunter_t[1], "gray80"),
+             funding_agency = fct_relevel(funding_agency, "USAID") %>% fct_rev(),
+             fill_color = fct_rev(fill_color))
+    
+    return(df_sys)
+  }
+ 
   
   
-  df_sys <- df_dhi %>% 
-    bind_rows(df_dhi %>% 
-                mutate(funding_agency = "PEPFAR")) %>% 
-    filter(country == "Tanzania") %>% 
-    rename(fiscal_year = dhi_submission_fiscal_year) %>% 
-    clean_agency() %>% 
-    filter(fiscal_year == max(fiscal_year),
-           dhi_question_code == "estimated_budget") %>% 
-    mutate(estimated_budget = as.numeric(response_option_desc)) %>% 
-    group_by(fiscal_year, country, funding_agency) %>% 
-    summarise(estimated_budget = sum(estimated_budget, na.rm = TRUE),
-              n_systems = n_distinct(discrete_system_id),
-              n_activities = n(),
-              .groups = "drop") %>% 
-    mutate(fill_color = ifelse(funding_agency == "USAID", si_palettes$hunter_t[3], "gray80"),
-           funding_agency = fct_relevel(funding_agency, "USAID") %>% fct_rev(),
-           fill_color = fct_rev(fill_color))
   
-  v_subt <- df_sys %>% 
-    filter(country == "Tanzania",
-           funding_agency %in% c("USAID", "PEPFAR")) %>% 
-    mutate(agency_anno = glue("**<span style = 'color:{fill_color};'>{funding_agency}</span>** - Budget: {label_currency(.1, scale_cut = cut_si(''))(estimated_budget)} | Systems: {label_number(1)(n_systems)} | Activities: {label_number(1)(n_activities)}")) %>% 
-    arrange(funding_agency) %>% 
-    pull() %>% 
-    paste(collapse = "<br>")
+  plot_dhi_overview <- function(df, cntry, export = TRUE){
+    
+    df_cntry <- df %>%  
+      filter(country == cntry) 
+    
+    #subititle
+    v_subt <- df_cntry %>% 
+      filter(funding_agency %in% c("USAID", "PEPFAR")) %>% 
+      mutate(agency_anno = glue("**<span style = 'color:{fill_color};'>{funding_agency}</span>** - Budget: {label_currency(.1, scale_cut = cut_si(''))(estimated_budget)} | Systems: {label_number(1)(n_systems)} | Activities: {label_number(1)(n_activities)}")) %>% 
+      arrange(funding_agency) %>% 
+      pull() %>% 
+      paste(collapse = "<br>")
+    
+    v <- df_cntry %>% 
+      filter(funding_agency != "PEPFAR") %>% 
+      ggplot(aes(estimated_budget, country, fill = fill_color)) +
+      geom_col() +
+      geom_text(aes(label = label_percent()(budget_share)), na.rm = TRUE,
+                family = "Source Sans Pro", hjust = -.3, color = matterhorn) +
+      scale_fill_identity() +
+      labs(x = NULL, y = NULL,
+           subtitle = v_subt) +
+      si_style_nolines() +
+      theme(axis.text = element_blank(),
+            plot.subtitle = element_markdown())
     
     
-
-  df_sys %>% 
-    filter(country == "Tanzania",
-           funding_agency != "PEFPAR") %>% 
-    mutate(share = estimated_budget/ sum(estimated_budget),
-           share = case_when(funding_agency == "USAID" ~ share)) %>% 
-    ggplot(aes(estimated_budget, country, fill = fill_color)) +
-    # geom_col(position = "fill") +
-    geom_col() +
-    geom_text(aes(label = label_percent()(share)), na.rm = TRUE,
-              family = "Source Sans Pro", hjust = -.3) +
-    scale_fill_identity() +
-    labs(x = NULL, y = NULL,
-         subtitle = v_subt) +
-    si_style_nolines() +
-    theme(axis.text = element_blank(),
-          plot.subtitle = element_markdown())
+    if(export)
+      save_png(cntry, "dhi", "overview")
+    
+    return(v)
+  }
+    
+  
+  #test
+  # df_sys <- prep_dhi_overview(df_dhi)
+  # 
+  # map(v_countries[20],
+  #     ~plot_dhi_overview(df_sys, .x, FALSE))
   
 
-  df_sys_cat <- df_dhi %>% 
-    rename(fiscal_year = dhi_submission_fiscal_year) %>% 
-    clean_agency() %>% 
-    filter(fiscal_year == max(fiscal_year),
-           dhi_question_code == "estimated_budget") %>% 
-    mutate(estimated_budget = as.numeric(response_option_desc)) %>% 
-    mutate(primary_system_category = ifelse(str_detect(primary_system_category, "\\)$"),
-                        str_extract(primary_system_category, "(?<=\\().*(?=\\))"),
-                        "Other")) %>% 
-    group_by(fiscal_year, country, funding_agency, primary_system_category) %>% 
-    summarise(estimated_budget = sum(estimated_budget, na.rm = TRUE),
-              n_systems = n_distinct(discrete_system_id),
-              n_activities = n(),
-              .groups = "drop") %>% 
-    group_by(fiscal_year, country, funding_agency) %>%
-    mutate(share = estimated_budget /sum(estimated_budget)) %>% 
-    ungroup() %>% 
-    filter(funding_agency %in% c("USAID", "CDC")) %>% 
-    mutate(fill_color = ifelse(funding_agency == "USAID", si_palettes$hunter_t[3], "gray80"))
+# DHI CATEGORY BREAKDOWN --------------------------------------------------
 
   
-  # df_sys_cat %>% 
-  #   ggplot(aes(share)) +
-  #   geom_histogram()
+  prep_dhi_cat <- function(df){
+    
+    df_sys_cat <- df %>% 
+      rename(fiscal_year = dhi_submission_fiscal_year) %>% 
+      clean_agency() %>% 
+      filter(fiscal_year == max(fiscal_year),
+             dhi_question_code == "estimated_budget") %>% 
+      mutate(estimated_budget = as.numeric(response_option_desc)) %>% 
+      mutate(primary_system_category = ifelse(str_detect(primary_system_category, "\\)$"),
+                                              str_extract(primary_system_category, "(?<=\\().*(?=\\))"),
+                                              "Other")) %>% 
+      group_by(fiscal_year, country, funding_agency, primary_system_category) %>% 
+      summarise(estimated_budget = sum(estimated_budget, na.rm = TRUE),
+                n_systems = n_distinct(discrete_system_id),
+                n_activities = n(),
+                .groups = "drop") %>% 
+      group_by(fiscal_year, country, funding_agency) %>%
+      mutate(share = estimated_budget /sum(estimated_budget)) %>% 
+      ungroup() %>% 
+      filter(funding_agency %in% c("USAID", "CDC")) %>% 
+      mutate(fill_color = ifelse(funding_agency == "USAID", si_palettes$hunter_t[1], "gray80"))
+    
+  }
   
-  df_sys_cat %>% 
-    filter(country == "Tanzania") %>% 
-    mutate(primary_system_category = fct_reorder(primary_system_category, estimated_budget, sum),
-           primary_system_category = fct_relevel(primary_system_category, "Other", after = 0)) %>% 
-    ggplot(aes(share, funding_agency, fill = fill_color)) +
-    geom_col() +
-    geom_text(aes(label = label_percent(1)(share)),
-              na.rm = TRUE, hjust = -.3,
-              family = "Source Sans Pro", color = matterhorn) +
-    facet_grid(~fct_rev(primary_system_category)) +
-    labs(x = NULL, y = NULL,
-         title = "Agency share of investments by HIS category" %>% toupper) +
-    scale_fill_identity() +
-    coord_cartesian(clip = "off") +
-    si_style_nolines() +
-    theme(axis.text.x = element_blank(),
-          legend.position = "none")
+    plot_dhi_cat <- function(df, cntry, export){
+      
+      df_cntry <- df %>% 
+        filter(country == cntry) %>% 
+        mutate(primary_system_category = fct_reorder(primary_system_category, estimated_budget, sum),
+               primary_system_category = fct_relevel(primary_system_category, "Other", after = 0))
+        
+      v <-  df_cntry %>% 
+        ggplot(aes(share, funding_agency, fill = fill_color)) +
+        geom_col() +
+        geom_text(aes(label = label_percent(1)(share)),
+                  na.rm = TRUE, hjust = -.3,
+                  family = "Source Sans Pro", color = matterhorn) +
+        facet_grid(~fct_rev(primary_system_category)) +
+        labs(x = NULL, y = NULL,
+             title = "Agency share of investments by HIS category" %>% toupper) +
+        scale_fill_identity() +
+        coord_cartesian(clip = "off") +
+        si_style_nolines() +
+        theme(axis.text.x = element_blank(),
+              legend.position = "none")
+      
+      if(export)
+        save_png(cntry, "dhi", "cat")
+      
+      return(v)
+      
+    }
   
+
+  # test
+  # df_sys_cat <- prep_dhi_cat(df_dhi)
+  # 
+  # map(v_countries[20],
+  #     ~plot_dhi_cat(df_sys_cat, .x, TRUE))
   
