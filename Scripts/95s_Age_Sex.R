@@ -59,20 +59,17 @@
     
     df_viz <- df_rel_lim%>% 
       mutate(stroke_color = ifelse(flag == FALSE, glitr::hw_orchid_bloom, glitr::hw_hunter),
-             sex = case_when(
-               sex == "Male" ~ "M",
-               sex == "Female" ~ "F",
-               TRUE ~ ""
-             ),
+            sex = str_sub(sex, end = 1),
              age_sex = glue("{age} {sex}"),
-             indic_age_sex = glue("{indicator} {age} {sex}"),
+             age_sex = str_remove(age_sex, " A"),
+             indic_age_sex = glue("{indicator} {age_sex}"),
              indic_age_sex = fct_relevel(indic_age_sex,
                                          c("Percent VLS on ART 15+ F", "Percent VLS on ART 15+ M",
-                                           "Percent VLS on ART 0-14 ",
+                                           "Percent VLS on ART 0-14",
                                            "Percent on ART with Known Status 15+ F", "Percent on ART with Known Status 15+ M",
-                                           "Percent on ART with Known Status 0-14 ",
+                                           "Percent on ART with Known Status 0-14",
                                            "Percent Known Status of PLHIV 15+ F", "Percent Known Status of PLHIV 15+ M", 
-                                           "Percent Known Status of PLHIV 0-14 "))) %>% 
+                                           "Percent Known Status of PLHIV 0-14"))) %>% 
       mutate(indicator = case_when(str_detect(indicator, "PLHIV") ~ "Known Status",
                                    str_detect(indicator, "on ART with Known Status") ~ "On ART",
                                    str_detect(indicator, "VLS") ~ "VLS", 
@@ -106,7 +103,7 @@
       geom_vline(xintercept = 0.95, linetype = "dashed", color = slate) +
       geom_segment(aes( x = .95, xend = share, yend = indic_age_sex),
                    linewidth = 1, alpha = .6) + 
-      geom_point(size = 4) + 
+      geom_point(size = 3.5) + 
       scale_x_continuous(labels = percent, expand = c(0.05, .05)) + 
       scale_y_discrete(labels = setNames(df$age_sex, df$indic_age_sex)) + 
       # geom_text(data = df %>% group_by(indicator) %>% 
