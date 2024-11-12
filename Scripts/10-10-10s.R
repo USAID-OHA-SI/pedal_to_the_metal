@@ -26,9 +26,9 @@
     
     
   # SI specific paths/functions  
-    #load_secrets("email")
+    load_secrets()
     
-    #pol_lab_id <- "1zVaQa2lYZqy3U7hdYLmK3spIxIL4aM3N"
+    pol_lab_id <- "1cm4sLwtAC52U82dceu-Nuts08gJoV_QOy_V-kxEGSdg"
       
   # Grab metadata
     metadata_pol_lab <- list(caption = "Source: HIV Policy Lab [2024-07-18]")
@@ -37,23 +37,24 @@
     ref_id <- "1b6b1dd7"
     
   # Functions  
-    
+    cop_ous <- glamr::pepfar_country_list %>% 
+      filter(str_detect(operatingunit, "Region", negate = T)) %>% 
+      pull(operatingunit)
 
 # LOAD DATA ============================================================================  
 
   #Read in HIV Policy Lab data export
-      #df <- googlesheets4::read_sheet(ss = "1zVaQa2lYZqy3U7hdYLmK3spIxIL4aM3N")
-    #df_tens <- googlesheets4::range_speedread(as_sheets_id(pol_lab_id), 
-                                              #"Policy adoption data",
-                                              #skip = 6, col_types = "c") %>% 
-      #janitor::clean_names()
-    
-    df_tens <- read_excel("Data/HIV Policy Lab - Data Export 2024-10-31.xlsx",
-                             sheet = "Policy adoption data", 
-                             skip = 6, col_types = "text") %>% 
+    df_tens <- googlesheets4::range_speedread(as_sheets_id(pol_lab_id), 
+                                              "Policy adoption data",
+                                              skip = 6, col_types = c(.default = "c")) %>% 
       janitor::clean_names()
     
-    View(df_tens)
+    #df_tens <- read_excel("Data/HIV Policy Lab - Data Export 2024-10-31.xlsx",
+     #                        sheet = "Policy adoption data", 
+      #                       skip = 6, col_types = "text") %>% 
+      #janitor::clean_names()
+    
+    #View(df_tens)
 
 # MUNGE ============================================================================
   
@@ -81,10 +82,8 @@
       
       #rename countries and limit to just PEPFAR
       df_struct <- df_struct %>% 
-        dplyr::mutate(country = ifelse(stringr::str_detect(country, "Ivoire"), "Cote d'Ivoire", country),
-                      country = dplyr::recode(country,
-                                              "Myanmar" = "Burma",
-                                              "Lao People's Democratic Republic" = "Laos",
+        dplyr::mutate(country = dplyr::recode(country,
+                                              "Côte d'Ivoire" = "Cote d'Ivoire",
                                               "Tanzania (United Republic of)" = "Tanzania",
                                               "Viet Nam" = "Vietnam"
                       )) %>% 
@@ -94,8 +93,8 @@
       df_viz <- df_struct %>% 
         dplyr::filter(year == "Most recent",
                       country == cntry) %>% 
-        dplyr::count(country, adoption_level, indicator_name) %>% 
-        dplyr::filter(!is.na(adoption_level))
+        dplyr::count(country, adoption_level, indicator_name) #%>% 
+        #dplyr::filter(!is.na(adoption_level))
       
       # add viz components
       df_viz <- df_viz %>% 
@@ -103,7 +102,7 @@
                       indicator_order = dplyr::case_when(adoption_level == "Not adopted" ~ 3,
                                                          adoption_level == "Partial" ~ 2, 
                                                          TRUE ~ 1),
-                      fill_color = dplyr::case_when(adoption_level == "Not adopted" ~ "#F8A27E",
+                      fill_color = dplyr::case_when(adoption_level == "Not adopted" ~ "#F8A27E", 
                                                     adoption_level == "Partial" ~ "#FBDC99",
                                                     adoption_level == "Adopted" ~ "#5BB5D5")) 
       
@@ -114,7 +113,8 @@
       
       df_sa <- prep_10s_barriers(df_tens, "South Africa")
       df_bw <- prep_10s_barriers(df_tens, "Botswana")
-    
+      
+      
   
 # VIZ ============================================================================
 
@@ -150,10 +150,9 @@
       
 # Icon Version  ------------------------------------------------------------------
         #use shapes instead of bars
-        
         plot_viz_10s <- function(df) {
           
-          q <- glue::glue("What gaps exists in adopting structural laws/policies towards UNAIDS' 10-10-10 goals?") %>% toupper
+          q <- glue::glue("THE LARGEST GAPS IN THE 10-10-10 GOALS IN {df$country}") %>% toupper
           
           if(is.null(df) || nrow(df) == 0)
             return(dummy_plot(q))
@@ -162,25 +161,56 @@
           
           df %>% 
             ggplot2::ggplot(ggplot2::aes(x = n, forcats::fct_reorder(indicator_name, indicator_order, na.rm = TRUE))) +
-            ggplot2::geom_point(aes(color = fill_color), shape = 19, size = 10) + 
-            ggplot2::facet_wrap(~forcats::fct_rev(adoption_level)) +
+            ggplot2::geom_point(aes(color = fill_color), shape = 19, size = 16) + 
+            #ggplot2::facet_wrap(~forcats::fct_rev(adoption_level)) +
             ggplot2::scale_color_identity() +
             ggplot2::scale_x_continuous(position = "top") +
-            ggplot2::labs(x = NULL, y = NULL,
+            ggplot2::labs(x = "Status", y = NULL,
                           title = {q},
-                          subtitle = glue::glue("{unique(df$country)}'s progress towards adopting structural laws/policies towards UNAIDS' 10-10-10 goals"),
+                          subtitle = glue::glue("<span style = 'font-weight: bold; color:#F8A27E'>Not Adopted </span> |
+                                 <span style = 'font-weight: bold;color:#FBDC99'>Partially </span> |
+                                                <span style = 'font-weight: bold;color:#5BB5D5'>Adopted</span>"),
+                          #subtitle = glue::glue("{unique(df$country)}'s progress towards adopting structural laws/policies towards UNAIDS' 10-10-10 goals"),
                           caption = glue::glue("{metadata_pol_lab$caption} |  Ref id: {ref_id}")) +
             glitr::si_style_nolines() +
             ggplot2::theme(strip.placement = "outside",
-                           strip.text.x = ggplot2::element_text(hjust = .5), 
-                           axis.text.x = ggplot2::element_blank())
+                           axis.text.x = ggplot2::element_blank(),
+                           plot.subtitle = element_markdown())
           
         }
         
         plot_viz_10s(df_sa)
         plot_viz_10s(df_bw)
-     
+        
+      
+      
         
 
 # SPINDOWN ============================================================================
 
+        
+        #plot_viz_10s <- function(df) {
+        
+        #q <- glue::glue("What gaps exists in adopting structural laws/policies towards UNAIDS' 10-10-10 goals?") %>% toupper
+        
+        #if(is.null(df) || nrow(df) == 0)
+         # return(dummy_plot(q))
+        
+        #ref_id <- "1b6b1dd7" #update plot identification
+        
+        #df %>% 
+         # ggplot2::ggplot(ggplot2::aes(x = n, forcats::fct_reorder(indicator_name, indicator_order, na.rm = TRUE))) +
+          #ggplot2::geom_point(aes(color = fill_color), shape = 19, size = 10) + 
+          #ggplot2::facet_wrap(~forcats::fct_rev(adoption_level)) +
+          #ggplot2::scale_color_identity() +
+          #ggplot2::scale_x_continuous(position = "top") +
+          #ggplot2::labs(x = NULL, y = NULL,
+           #             title = {q},
+            #            subtitle = glue::glue("{unique(df$country)}'s progress towards adopting structural laws/policies towards UNAIDS' 10-10-10 goals"),
+             #           caption = glue::glue("{metadata_pol_lab$caption} |  Ref id: {ref_id}")) +
+          #glitr::si_style_nolines() +
+          #ggplot2::theme(strip.placement = "outside",
+           #              strip.text.x = ggplot2::element_text(hjust = .5), 
+            #             axis.text.x = ggplot2::element_blank())
+        
+        #}

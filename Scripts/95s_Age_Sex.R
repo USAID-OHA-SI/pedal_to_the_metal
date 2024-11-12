@@ -42,17 +42,18 @@
 
 # MUNGE ============================================================================
   
-    prep_tt_tbl <- function(df, cntry) {
+    prep_tt_tbl <- function(df) {
       
       #Limit the data
     df_rel_lim <- df %>% 
-      filter(country == cntry,
+      filter(#country == cntry,
              indicator %in% c("Percent Known Status of PLHIV", 
                               "Percent on ART with Known Status",
                               "Percent VLS on ART"), 
              !(sex == "All" & age == "All"),
              ! (sex == "All" & age == "15+")) %>% 
       select(country, indicator,age, sex, estimate) %>% 
+      
       mutate(share = estimate/100,
              flag = share >= 0.95) 
     
@@ -75,7 +76,12 @@
     return(df_viz)
     }
     
-    df_sa <- prep_tt_tbl(df_tt, "South Africa")  
+    df_viz <- prep_tt_tbl(df_tt)
+    
+    df_sa <- prep_tt_tbl(df_tt) %>% 
+      filter(country == "South Africa")
+    
+    #purrr::map(cop_ous, ~prep_tt_tbl(df_tt, .))
     
   
 # VIZ ============================================================================
@@ -85,10 +91,10 @@
       #broken out by age (0-14, 15+) and sex (male, female)
       #note: sex disagg only for adults (15+), not children (<15)
     
-    plot_epi_gaps <- function(df) {
+    plot_epi_gaps <- function(df, cntry) {
       
-      #df <- df_viz %>% 
-        #filter(country == cntry)
+      df <- df_viz %>% 
+        filter(country == cntry)
       
       ggplot(df,
              aes(x = share, y = indic_age_sex, color = stroke_color)) + 
@@ -111,7 +117,7 @@
     }
       
 
-    plot_epi_gaps(df_sa)
+    plot_epi_gaps(df_viz, "South Africa")
 
 # SPINDOWN ============================================================================
 
