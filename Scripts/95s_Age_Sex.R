@@ -22,6 +22,8 @@
   library(gtExtras)
   #remotes::install_github("USAID-OHA-SI/mindthegap", ref = "dev_edms") #install UNAIDS package from dev_edms branch
   library(mindthegap)
+
+  source("Scripts/zero_margins.R")
     
   
   # REF ID for plots
@@ -138,8 +140,8 @@
     }
       
 
-    plot_epi_gaps(df_viz, "Mozambique") %>% zero_margins()
-    save_png("Zambia", "epi", scale = 0.5)
+    plot_epi_gaps(df_viz, "Zambia") %>% zero_margins()
+    save_png("Zambia", "epi", "gaps", scale = 0.5)
 
 # SPINDOWN ============================================================================
 
