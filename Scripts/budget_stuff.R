@@ -8,38 +8,38 @@
 
 # DEPENDENCIES ------------------------------------------------------------
   
-  #general
-  library(tidyverse)
-  library(glue)
-  #oha
-  library(gagglr) ##install.packages('gagglr', repos = c('https://usaid-oha-si.r-universe.dev', 'https://cloud.r-project.org'))
-  #viz extensions
-  library(scales, warn.conflicts = FALSE)
-  library(systemfonts)
-  library(tidytext)
-  library(patchwork)
-  library(ggtext)
-  library(gt)
-  library(fontawesome)
-  
-  source("Scripts/save_png.R")
-  source("Scripts/save_gt.R")
+  # #general
+  # library(tidyverse)
+  # library(glue)
+  # #oha
+  # library(gagglr) ##install.packages('gagglr', repos = c('https://usaid-oha-si.r-universe.dev', 'https://cloud.r-project.org'))
+  # #viz extensions
+  # library(scales, warn.conflicts = FALSE)
+  # library(systemfonts)
+  # library(tidytext)
+  # library(patchwork)
+  # library(ggtext)
+  # library(gt)
+  # library(fontawesome)
+  # 
+  # source("Scripts/save_png.R")
+  # source("Scripts/save_gt.R")
 
 # GLOBAL VARIABLES --------------------------------------------------------
   
-  ref_id <- "9c6a789d"  #a reference to be places in viz captions 
-  
-  path_fsd <-  si_path() %>% return_latest("Financial")
-  
-  meta <- get_metadata(path_fsd)  #extract MSD metadata
-  
-  v_countries <- pepfar_country_list %>%
-    filter(str_detect(operatingunit, "Region", negate = TRUE)) %>%
-    pull(country)
+  # ref_id <- "9c6a789d"  #a reference to be places in viz captions 
+  # 
+  # path_fsd <-  si_path() %>% return_latest("Financial")
+  # 
+  # meta <- get_metadata(path_fsd)  #extract MSD metadata
+  # 
+  # v_countries <- pepfar_country_list %>%
+  #   filter(str_detect(operatingunit, "Region", negate = TRUE)) %>%
+  #   pull(country)
 
 # IMPORT ------------------------------------------------------------------
   
-  df_fsd <- read_psd(path_fsd)
+  # df_fsd <- read_psd(path_fsd)
   
 
 # BUDGET TREND ------------------------------------------------------------
@@ -93,10 +93,10 @@
   
 
  #test 
-  df_bdgt_trnd <- prep_bdgt_trend(df_fsd)
-  
-  map(v_countries[20],
-      ~plot_bdgt_trend(df_bdgt_trnd, .x, FALSE))
+  # df_bdgt_trnd <- prep_bdgt_trend(df_fsd)
+  # 
+  # map(v_countries[20],
+  #     ~plot_bdgt_trend(df_bdgt_trnd, .x, FALSE))
 
 
 # BUDGET TABLE ------------------------------------------------------------
@@ -175,11 +175,11 @@
   
 
   #test 
-  df_bdgt_trend_tbl <- df_bdgt_trnd %>% 
-    prep_bdgt_tbl()
-  
-  map(v_countries[20],
-      ~plot_budget_tbl(df_bdgt_trend_tbl, .x, FALSE))
+  # df_bdgt_trend_tbl <- df_bdgt_trnd %>% 
+  #   prep_bdgt_tbl()
+  # 
+  # map(v_countries[20],
+  #     ~plot_budget_tbl(df_bdgt_trend_tbl, .x, FALSE))
   
    
 # LOCAL PARTNER SHARE -----------------------------------------------------
@@ -239,10 +239,10 @@
   }
   
   #test 
-   df_lp_share <- prep_lp_share(df_fsd)
-   
-   map(v_countries[20],
-       ~plot_lp_share(df_lp_share, .x, FALSE))
+   # df_lp_share <- prep_lp_share(df_fsd)
+   # 
+   # map(v_countries[20],
+   #     ~plot_lp_share(df_lp_share, .x, FALSE))
    
 
   

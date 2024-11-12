@@ -8,36 +8,36 @@
 
 # DEPENDENCIES ------------------------------------------------------------
   
-  #general
-  library(tidyverse)
-  library(glue)
-  #oha
-  library(gagglr) ##install.packages('gagglr', repos = c('https://usaid-oha-si.r-universe.dev', 'https://cloud.r-project.org'))
-  #viz extensions
-  library(scales, warn.conflicts = FALSE)
-  library(systemfonts)
-  library(tidytext)
-  library(patchwork)
-  library(ggtext)
-
-  source("Scripts/save_png.R")
+  # #general
+  # library(tidyverse)
+  # library(glue)
+  # #oha
+  # library(gagglr) ##install.packages('gagglr', repos = c('https://usaid-oha-si.r-universe.dev', 'https://cloud.r-project.org'))
+  # #viz extensions
+  # library(scales, warn.conflicts = FALSE)
+  # library(systemfonts)
+  # library(tidytext)
+  # library(patchwork)
+  # library(ggtext)
+  # 
+  # source("Scripts/save_png.R")
   
 
 # GLOBAL VARIABLES --------------------------------------------------------
   
-  ref_id <- "05e50315"  #a reference to be places in viz captions 
-  
-  path_hrh <-  si_path() %>% return_latest("HRH.*not_redacted.*txt")
-  
-  meta <- get_metadata(path_hrh)  #extract MSD metadata
-  
-  v_countries <- pepfar_country_list %>%
-    filter(str_detect(operatingunit, "Region", negate = TRUE)) %>%
-    pull(country)
+  # ref_id <- "05e50315"  #a reference to be places in viz captions 
+  # 
+  # path_hrh <-  si_path() %>% return_latest("HRH.*not_redacted.*txt")
+  # 
+  # meta <- get_metadata(path_hrh)  #extract MSD metadata
+  # 
+  # v_countries <- pepfar_country_list %>%
+  #   filter(str_detect(operatingunit, "Region", negate = TRUE)) %>%
+  #   pull(country)
   
 # IMPORT ------------------------------------------------------------------
   
-  df_hrh <- read_psd(path_hrh)
+  # df_hrh <- read_psd(path_hrh)
   
 
 # MUNGE -------------------------------------------------------------------
@@ -137,8 +137,8 @@
   
   
   #test
-  df_hrh_plot <- prep_hrh(df_hrh)
-
-  map(v_countries[17],
-       ~plot_hrh(df_hrh_plot, .x, F))
+  # df_hrh_plot <- prep_hrh(df_hrh)
+  # 
+  # map(v_countries[17],
+  #      ~plot_hrh(df_hrh_plot, .x, F))
 

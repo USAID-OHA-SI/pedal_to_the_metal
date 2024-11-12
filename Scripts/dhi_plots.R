@@ -8,35 +8,35 @@
 
 # DEPENDENCIES ------------------------------------------------------------
   
-  #general
-  library(tidyverse)
-  library(vroom)
-  library(glue)
-  #oha
-  library(gagglr) ##install.packages('gagglr', repos = c('https://usaid-oha-si.r-universe.dev', 'https://cloud.r-project.org'))
-  #viz extensions
-  library(scales, warn.conflicts = FALSE)
-  library(systemfonts)
-  library(tidytext)
-  library(patchwork)
-  library(ggtext)
-
-  source("Scripts/save_png.R")
+  # #general
+  # library(tidyverse)
+  # library(vroom)
+  # library(glue)
+  # #oha
+  # library(gagglr) ##install.packages('gagglr', repos = c('https://usaid-oha-si.r-universe.dev', 'https://cloud.r-project.org'))
+  # #viz extensions
+  # library(scales, warn.conflicts = FALSE)
+  # library(systemfonts)
+  # library(tidytext)
+  # library(patchwork)
+  # library(ggtext)
+  # 
+  # source("Scripts/save_png.R")
   
 
 # GLOBAL VARIABLES --------------------------------------------------------
   
-  ref_id <- "22955bf0"  #a reference to be places in viz captions 
-  
-  path_dhi <-  si_path() %>% return_latest("DHI.*Detailed")
-  
-  v_countries <- pepfar_country_list %>%
-    filter(str_detect(operatingunit, "Region", negate = TRUE)) %>%
-    pull(country)
+  # ref_id <- "22955bf0"  #a reference to be places in viz captions 
+  # 
+  # path_dhi <-  si_path() %>% return_latest("DHI.*Detailed")
+  # 
+  # v_countries <- pepfar_country_list %>%
+  #   filter(str_detect(operatingunit, "Region", negate = TRUE)) %>%
+  #   pull(country)
   
 # IMPORT ------------------------------------------------------------------
   
-  df_dhi <- vroom(path_dhi)
+  # df_dhi <- vroom(path_dhi)
   
 
 # EXPLORE -----------------------------------------------------------------
@@ -176,7 +176,7 @@
     
   }
   
-    plot_dhi_cat <- function(df, cntry, export){
+    plot_dhi_cat <- function(df, cntry, export = TRUE){
       
       df_cntry <- df %>% 
         filter(country == cntry) %>% 
@@ -186,7 +186,8 @@
       
       #ensure USAID and CDC have lines
       df_cntry <- df_cntry %>% 
-        right_join(expand_grid(funding_agency = c("USAID", "CDC")))
+        right_join(expand_grid(funding_agency = c("USAID", "CDC")),
+                   by = join_by(funding_agency))
         
       v <-  df_cntry %>% 
         ggplot(aes(share, funding_agency, fill = fill_color)) +
@@ -212,8 +213,8 @@
   
 
   # test
-  df_sys_cat <- prep_dhi_cat(df_dhi)
-
-  map(v_countries[20],
-      ~plot_dhi_cat(df_sys_cat, .x, FALSE))
-  
+  # df_sys_cat <- prep_dhi_cat(df_dhi)
+  # 
+  # map(v_countries[20],
+  #     ~plot_dhi_cat(df_sys_cat, .x, FALSE))
+  # 
