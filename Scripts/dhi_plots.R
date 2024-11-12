@@ -8,35 +8,35 @@
 
 # DEPENDENCIES ------------------------------------------------------------
   
-  #general
-  library(tidyverse)
-  library(vroom)
-  library(glue)
-  #oha
-  library(gagglr) ##install.packages('gagglr', repos = c('https://usaid-oha-si.r-universe.dev', 'https://cloud.r-project.org'))
-  #viz extensions
-  library(scales, warn.conflicts = FALSE)
-  library(systemfonts)
-  library(tidytext)
-  library(patchwork)
-  library(ggtext)
-
-  source("Scripts/save_png.R")
+  # #general
+  # library(tidyverse)
+  # library(vroom)
+  # library(glue)
+  # #oha
+  # library(gagglr) ##install.packages('gagglr', repos = c('https://usaid-oha-si.r-universe.dev', 'https://cloud.r-project.org'))
+  # #viz extensions
+  # library(scales, warn.conflicts = FALSE)
+  # library(systemfonts)
+  # library(tidytext)
+  # library(patchwork)
+  # library(ggtext)
+  # 
+  # source("Scripts/save_png.R")
   
 
 # GLOBAL VARIABLES --------------------------------------------------------
   
-  ref_id <- "22955bf0"  #a reference to be places in viz captions 
-  
-  path_dhi <-  si_path() %>% return_latest("DHI.*Detailed")
-  
-  v_countries <- pepfar_country_list %>%
-    filter(str_detect(operatingunit, "Region", negate = TRUE)) %>%
-    pull(country)
+  # ref_id <- "22955bf0"  #a reference to be places in viz captions 
+  # 
+  # path_dhi <-  si_path() %>% return_latest("DHI.*Detailed")
+  # 
+  # v_countries <- pepfar_country_list %>%
+  #   filter(str_detect(operatingunit, "Region", negate = TRUE)) %>%
+  #   pull(country)
   
 # IMPORT ------------------------------------------------------------------
   
-  df_dhi <- vroom(path_dhi)
+  # df_dhi <- vroom(path_dhi)
   
 
 # EXPLORE -----------------------------------------------------------------
@@ -69,6 +69,14 @@
                 n_systems = n_distinct(discrete_system_id),
                 n_activities = n(),
                 .groups = "drop") 
+    
+    #expand grid to avoid empty plots
+    df_sys <- df_sys %>% 
+      right_join(expand_grid(fiscal_year = max(df_sys$fiscal_year),
+                country = pepfar_country_list$country,
+                funding_agency = c("PEPFAR","USAID")),
+                by = join_by(fiscal_year, country, funding_agency))
+    
     
     df_sys <- df_sys %>% 
       mutate(budget_share = case_when(funding_agency != "PEPFAR" ~ estimated_budget)) %>% 
@@ -104,7 +112,7 @@
     v <- df_cntry %>% 
       filter(funding_agency != "PEPFAR") %>% 
       ggplot(aes(estimated_budget, country, fill = fill_color)) +
-      geom_col() +
+      geom_col(na.rm = TRUE) +
       geom_text(aes(label = label_percent()(budget_share)), na.rm = TRUE,
                 family = "Source Sans Pro", hjust = -.3, color = matterhorn) +
       scale_fill_identity() +
@@ -154,18 +162,36 @@
       filter(funding_agency %in% c("USAID", "CDC")) %>% 
       mutate(fill_color = ifelse(funding_agency == "USAID", si_palettes$hunter_t[1], "gray80"))
     
+    
+    #expand grid to avoid empty plots
+    df_sys_cat <- df_sys_cat %>% 
+      right_join(expand_grid(fiscal_year = max(df_sys_cat$fiscal_year),
+                             country = pepfar_country_list$country,
+                             funding_agency = c("USAID", "CDC"),
+                             primary_system_category = unique(df_sys_cat$primary_system_category)),
+                 by = join_by(fiscal_year, country, funding_agency, primary_system_category)) %>% 
+      mutate(estimated_budget = ifelse(is.na(estimated_budget), 0, estimated_budget))
+    
+    return(df_sys_cat)
+    
   }
   
-    plot_dhi_cat <- function(df, cntry, export){
+    plot_dhi_cat <- function(df, cntry, export = TRUE){
       
       df_cntry <- df %>% 
         filter(country == cntry) %>% 
         mutate(primary_system_category = fct_reorder(primary_system_category, estimated_budget, sum),
-               primary_system_category = fct_relevel(primary_system_category, "Other", after = 0))
+               primary_system_category = fct_relevel(primary_system_category, "Other", after = 0)) %>% 
+        filter(estimated_budget > 0)
+      
+      #ensure USAID and CDC have lines
+      df_cntry <- df_cntry %>% 
+        right_join(expand_grid(funding_agency = c("USAID", "CDC")),
+                   by = join_by(funding_agency))
         
       v <-  df_cntry %>% 
         ggplot(aes(share, funding_agency, fill = fill_color)) +
-        geom_col() +
+        geom_col(na.rm = TRUE) +
         geom_text(aes(label = label_percent(1)(share)),
                   na.rm = TRUE, hjust = -.3,
                   family = "Source Sans Pro", color = matterhorn) +
@@ -190,5 +216,5 @@
   # df_sys_cat <- prep_dhi_cat(df_dhi)
   # 
   # map(v_countries[20],
-  #     ~plot_dhi_cat(df_sys_cat, .x, TRUE))
-  
+  #     ~plot_dhi_cat(df_sys_cat, .x, FALSE))
+  # 
