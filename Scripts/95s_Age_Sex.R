@@ -109,13 +109,12 @@
       #broken out by age (0-14, 15+) and sex (male, female)
       #note: sex disagg only for adults (15+), not children (<15)
     
-    plot_epi_gaps <- function(df, cntry) {
+    plot_epi_gaps <- function(df, cntry, export = TRUE) {
       
       df <- df_viz %>% 
         filter(country == cntry, !(sex == "All" & age == "15+"))
       
-      ggplot(df,
-             aes(x = share, y = indic_age_sex, color = stroke_color)) + 
+      v <- df %>% ggplot(aes(x = share, y = indic_age_sex, color = stroke_color)) + 
       geom_vline(xintercept = 0.95, linetype = "dashed", color = slate) +
       geom_segment(aes( x = .95, xend = share, yend = indic_age_sex),
                    linewidth = 1, alpha = .6) + 
@@ -132,16 +131,29 @@
       theme(strip.text = element_text(hjust = .5, size = 10),
             strip.placement = "outside", 
             panel.spacing = unit(.25, "line"),
-            plot.title = element_text(hjust = 0.1)) +
+            plot.title = element_text(hjust = 0.1),
+            plot.margin = ggplot2::margin(0, 0, 0, 0, unit = "pt")) +
       labs(x = NULL, y = NULL,
            title = glue("KEY EPIDEMIOLOGICAL GAPS")
-      )
-           # caption = glue("{mindthegap::source_note} | Ref ID: {ref_id}"))
+      ) 
+      
+      if(export)
+        save_png(cntry, "epi", "gaps", scale = 0.5)
+      
+      return(v)
     }
       
 
-    plot_epi_gaps(df_viz, "Zambia") %>% zero_margins()
+    plot_epi_gaps(df_viz, "Zambia")
     save_png("Zambia", "epi", "gaps", scale = 0.5)
+    
+    cntry_list  <- 
+      pepfar_country_list %>% 
+      filter(str_detect(operatingunit, "Region", negate = T), 
+             operatingunit %ni% c("Cameroon", "Ukraine")) %>% 
+      pull(operatingunit)
+    
+  map(cntry_list, .f = ~plot_epi_gaps(df_viz, .x))
 
 # SPINDOWN ============================================================================
 
