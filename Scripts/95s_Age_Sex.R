@@ -104,7 +104,7 @@
       geom_segment(aes( x = .95, xend = share, yend = indic_age_sex),
                    linewidth = 1, alpha = .6) + 
       geom_point(size = 3.5) + 
-      scale_x_continuous(labels = percent, expand = c(0.05, .05)) + 
+      scale_x_continuous(labels = percent, expand = c(0.005, .005)) + 
       scale_y_discrete(labels = setNames(df$age_sex, df$indic_age_sex)) + 
       # geom_text(data = df %>% group_by(indicator) %>% 
       #             slice(1),
@@ -113,7 +113,7 @@
       facet_grid(indicator ~ .,  scales = "free_y", switch = "y")+
       scale_color_identity() + 
       si_style_xgrid() +
-      theme(strip.text = element_text(hjust = .5, size = 20/.pt),
+      theme(strip.text = element_text(hjust = .5, size = 10),
             strip.placement = "outside", 
             panel.spacing = unit(.25, "line"),
             plot.title = element_text(hjust = 0.1)) +
@@ -124,8 +124,8 @@
     }
       
 
-    plot_epi_gaps(df_viz, "South Africa")
-    si_preview(scale = 0.5)
+    plot_epi_gaps(df_viz, "Zambia") %>% zero_margins()
+    save_png("Zambia", "epi", scale = 0.5)
 
 # SPINDOWN ============================================================================
 
