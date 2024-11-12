@@ -20,7 +20,7 @@
   library(glue)
   library(gt)
   library(gtExtras)
-  remotes::install_github("USAID-OHA-SI/mindthegap", ref = "dev_edms") #install UNAIDS package from dev_edms branch
+  #remotes::install_github("USAID-OHA-SI/mindthegap", ref = "dev_edms") #install UNAIDS package from dev_edms branch
   library(mindthegap)
     
   
@@ -58,16 +58,21 @@
              flag = share >= 0.95) 
     
     df_viz <- df_rel_lim%>% 
-      mutate(stroke_color = ifelse(flag == TRUE, glitr::hw_orchid_bloom, glitr::hw_hunter),
+      mutate(stroke_color = ifelse(flag == FALSE, glitr::hw_orchid_bloom, glitr::hw_hunter),
+             sex = case_when(
+               sex == "Male" ~ "M",
+               sex == "Female" ~ "F",
+               TRUE ~ ""
+             ),
              age_sex = glue("{age} {sex}"),
              indic_age_sex = glue("{indicator} {age} {sex}"),
              indic_age_sex = fct_relevel(indic_age_sex,
-                                         c("Percent VLS on ART 15+ Female", "Percent VLS on ART 15+ Male",
-                                           "Percent VLS on ART 0-14 All",
-                                           "Percent on ART with Known Status 15+ Female", "Percent on ART with Known Status 15+ Male",
-                                           "Percent on ART with Known Status 0-14 All",
-                                           "Percent Known Status of PLHIV 15+ Female", "Percent Known Status of PLHIV 15+ Male", 
-                                           "Percent Known Status of PLHIV 0-14 All"))) %>% 
+                                         c("Percent VLS on ART 15+ F", "Percent VLS on ART 15+ M",
+                                           "Percent VLS on ART 0-14 ",
+                                           "Percent on ART with Known Status 15+ F", "Percent on ART with Known Status 15+ M",
+                                           "Percent on ART with Known Status 0-14 ",
+                                           "Percent Known Status of PLHIV 15+ F", "Percent Known Status of PLHIV 15+ M", 
+                                           "Percent Known Status of PLHIV 0-14 "))) %>% 
       mutate(indicator = case_when(str_detect(indicator, "PLHIV") ~ "Known Status",
                                    str_detect(indicator, "on ART with Known Status") ~ "On ART",
                                    str_detect(indicator, "VLS") ~ "VLS", 
@@ -101,23 +106,29 @@
       geom_vline(xintercept = 0.95, linetype = "dashed", color = slate) +
       geom_segment(aes( x = .95, xend = share, yend = indic_age_sex),
                    linewidth = 1, alpha = .6) + 
-      geom_point(size = 3) + 
+      geom_point(size = 4) + 
       scale_x_continuous(labels = percent, expand = c(0.05, .05)) + 
       scale_y_discrete(labels = setNames(df$age_sex, df$indic_age_sex)) + 
-      geom_text(data = df %>% group_by(indicator) %>% 
-                  slice(1),
-                aes(label=indicator, x = .98, color = "black"),
-                family = "Source Sans Pro", size = 4, vjust = -.6) + 
-      scale_color_identity()+ 
-      si_style_xgrid()+
+      # geom_text(data = df %>% group_by(indicator) %>% 
+      #             slice(1),
+      #           aes(label=indicator, x = .98, color = "black"),
+      #           family = "Source Sans Pro", size = 4, vjust = -.6) + 
+      facet_grid(indicator ~ .,  scales = "free_y", switch = "y")+
+      scale_color_identity() + 
+      si_style_xgrid() +
+      theme(strip.text = element_text(hjust = .5, size = 20/.pt),
+            strip.placement = "outside", 
+            panel.spacing = unit(.25, "line"),
+            plot.title = element_text(hjust = 0.1)) +
       labs(x = NULL, y = NULL,
-           title = glue("KEY EPI GAPS"),
-           caption = glue("{mindthegap::source_note} | Ref ID: {ref_id}"))
-  
+           title = glue("KEY EPIDEMIOLOGICAL GAPS")
+      )
+           # caption = glue("{mindthegap::source_note} | Ref ID: {ref_id}"))
     }
       
 
     plot_epi_gaps(df_viz, "South Africa")
+    si_preview(scale = 0.5)
 
 # SPINDOWN ============================================================================
 
