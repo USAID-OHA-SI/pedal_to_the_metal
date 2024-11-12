@@ -183,6 +183,10 @@
         mutate(primary_system_category = fct_reorder(primary_system_category, estimated_budget, sum),
                primary_system_category = fct_relevel(primary_system_category, "Other", after = 0)) %>% 
         filter(estimated_budget > 0)
+      
+      #ensure USAID and CDC have lines
+      df_cntry <- df_cntry %>% 
+        right_join(expand_grid(funding_agency = c("USAID", "CDC")))
         
       v <-  df_cntry %>% 
         ggplot(aes(share, funding_agency, fill = fill_color)) +

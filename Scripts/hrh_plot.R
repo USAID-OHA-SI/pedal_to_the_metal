@@ -4,7 +4,7 @@
 # REF ID:   05e50315 
 # LICENSE:  MIT
 # DATE:     2024-11-04
-# UPDATED: 
+# UPDATED:  2024-11-12
 
 # DEPENDENCIES ------------------------------------------------------------
   
@@ -19,6 +19,8 @@
   library(tidytext)
   library(patchwork)
   library(ggtext)
+
+  source("Scripts/save_png.R")
   
 
 # GLOBAL VARIABLES --------------------------------------------------------
@@ -29,7 +31,9 @@
   
   meta <- get_metadata(path_hrh)  #extract MSD metadata
   
-  cntry <- "Tanzania"
+  v_countries <- pepfar_country_list %>%
+    filter(str_detect(operatingunit, "Region", negate = TRUE)) %>%
+    pull(country)
   
 # IMPORT ------------------------------------------------------------------
   
@@ -54,6 +58,14 @@
       group_by(fiscal_year, country, funding_agency, er_category) %>% 
       summarise(across(c(individual_count, actual_annual_spend), \(x) sum(x, na.rm = TRUE)),
                 .groups = "drop")
+    
+    #expand grid to avoid empty plots
+    df_hrh_v <- df_hrh_v %>% 
+      right_join(expand_grid(fiscal_year = max(df_hrh_v$fiscal_year),
+                             country = pepfar_country_list$country,
+                             funding_agency = c("CDC","USAID"),
+                             er_category = unique(df_hrh_v$er_category)),
+                 by = join_by(fiscal_year, country, funding_agency, er_category))
     
     #pivot longer for plotting and clean up values
     df_hrh_v <- df_hrh_v %>% 
@@ -97,10 +109,10 @@
     
     #plot 
     v <- df_hrh_v_cntry %>% 
-      ggplot(aes(value, fct_reorder(er_category, ordering, .fun = sum), fill = fill_color)) +
+      ggplot(aes(value, fct_reorder(er_category, ordering, .fun = sum, .na_rm = TRUE), fill = fill_color)) +
       geom_blank(aes(x = value*1.2)) +
-      geom_col(width = 0.9) +
-      geom_text(aes(label = val_fmt), hjust = -.15,
+      geom_col(width = 0.9, na.rm = TRUE) +
+      geom_text(aes(label = val_fmt), hjust = -.15, na.rm = TRUE,
                 family = "Source Sans Pro", color = matterhorn) +
       facet_grid(fct_rev(funding_agency) ~ fct_rev(type), scales = "free_x", switch = "y") +
       scale_x_continuous(labels = label_number(.1, scale_cut = cut_si(''))) +
@@ -117,8 +129,8 @@
             panel.spacing = unit(.25, "line"))
     
     if(export)
-      # si_save(v, glue("{cntry}_hrh.png"), path = "Images")
-    print(glue("{cntry}"))
+      save_png(cntry, "hrh")
+    
     return(v)
   }
   
@@ -127,12 +139,6 @@
   #test
   df_hrh_plot <- prep_hrh(df_hrh)
 
-  v_countries <- pepfar_country_list %>%
-    filter(str_detect(operatingunit, "Region", negate = TRUE)) %>%
-    pull(country)
-
   map(v_countries[17],
        ~plot_hrh(df_hrh_plot, .x, F))
-  si_save("Images/rwa_hrh.png", scale = 0.5)
-si_preview(scale = 0.5)
 
