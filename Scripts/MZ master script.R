@@ -8,9 +8,9 @@ library(gagglr)
 
 # Functions and datasets ------------
 clean_number <- function(x, digits = 0){
-  dplyr::case_when(x >= 1e9 ~ glue("{round(x/1e9, digits)}B"),
-                   x >= 1e6 ~ glue("{round(x/1e6, digits)}M"),
-                   x >= 1e3 ~ glue("{round(x/1e3, digits)}K"),
+  dplyr::case_when(x >= 1e9 ~ glue("{round(x/1e9, digits)}b"),
+                   x >= 1e6 ~ glue("{round(x/1e6, digits)}m"),
+                   x >= 1e3 ~ glue("{round(x/1e3, digits)}k"),
                    TRUE ~ glue("{x}"))
 }
 
@@ -283,6 +283,8 @@ global_1 <- global %>%
                                              TRUE ~ "Low Dependency"),
            age_dep = round(age_dep, 0)) %>%
     select(!country)
+  ad$age_dep <- as.character(ad$age_dep)
+  
   
   # nurses/midwives data
   nurses <- nurses_raw %>%
@@ -313,8 +315,9 @@ global_1 <- global %>%
     left_join(nurses_2) %>%
     select(!c(operatingunit_iso, country))
   
-  
-  # gov expenditure data
+  nurses_3$nurses <- as.character(nurses_3$nurses)
+
+    # gov expenditure data
   gov <- gov_raw %>%
     select(SpatialDimValueCode, Location, Period, Value) %>%
     rename(country = Location,
@@ -362,7 +365,7 @@ global_1 <- global %>%
     filter(country %in% cop_ous) %>%
     select(!c(operatingunit_iso))
   
-  
+ # combine 
   df <- budget_cop %>%
     full_join(results_cop) %>%
     full_join(unaids_cop) %>%
