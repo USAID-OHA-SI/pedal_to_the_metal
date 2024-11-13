@@ -4,7 +4,7 @@
 # REF ID:   9c6a789d 
 # LICENSE:  MIT
 # DATE:     2024-10-31
-# UPDATED:  2024-11-12
+# UPDATED:  2024-11-13
 
 # DEPENDENCIES ------------------------------------------------------------
   
@@ -195,9 +195,11 @@
     
     df_lp <- df %>% 
       filter(fiscal_year == max(fiscal_year),
-             fundingagency == "USAID") %>%
-      mutate(local_prime_partner = factor(local_prime_partner, 
-                                          c("Local", "International", "Unknown")) %>% 
+             fundingagency %in% c("USAID", "USAID/WCF")) %>%
+      remove_mo() %>% 
+      mutate(local_prime_partner = ifelse(mech_name == "TBD" | prime_partner_name == "TBD", "TBD", local_prime_partner),
+             local_prime_partner = factor(local_prime_partner, 
+                                          c("Local", "International", "Unknown", "TBD")) %>% 
                fct_rev()) %>% 
       group_by(country, fiscal_year, local_prime_partner) %>% 
       summarise(cop_budget_total = sum(cop_budget_total, na.rm = TRUE),
@@ -216,20 +218,22 @@
     df_cntry <- df %>% 
       filter(country == {cntry})
     
-    unkwn_share <- label_percent(1)(df_cntry[df_cntry$local_prime_partner == "Unknown",]$share)
+    # unkwn_share <- label_percent(1)(df_cntry[df_cntry$local_prime_partner == "Unknown",]$share)
+    tbd_share <- label_percent(1)(df_cntry[df_cntry$local_prime_partner == "TBD",]$share)
     
     v <- df_cntry %>% 
       ggplot(aes(cop_budget_total, country, fill = local_prime_partner)) +
       geom_col(width = 0.05) +
       scale_fill_manual(values = c("Local" = si_palettes$hunter_t[1], 
                                    "International" = si_palettes$hunter_t[5], #grey20k, 
-                                   "Unknown" = si_palettes$hunter_t[5] #grey30k
+                                   "Unknown" = si_palettes$hunter_t[5], #grey30k
+                                   "TBD" = si_palettes$hunter_t[5] #grey30k
                                    )) +
       geom_text(aes(label = pt_label), na.rm = TRUE, color = si_palettes$hunter_t[1],
                 family = "Source Sans Pro", hjust = -.25, size = 11/.pt) +
       labs(x = NULL, y = NULL,
            title = glue("USAID BUDGET TO <span style = 'color:{si_palettes$hunter_t[1]};'>LOCAL PARTNERS</span>"),
-           subtitle = glue("FY{str_sub(df_cntry$fiscal_year, -2)} Budget [{unkwn_share} classified as 'Unknown']")) +
+           subtitle = glue("FY{str_sub(df_cntry$fiscal_year, -2)} Budget [{unkwn_share} classified as 'TBD' as International]")) +
            #caption = "Note: Includes SCH") +
       si_style_nolines() +
       scale_y_discrete(expand = expansion(mult = 0)) +
