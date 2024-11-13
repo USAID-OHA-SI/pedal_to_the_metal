@@ -119,12 +119,15 @@
       labs(x = NULL, y = NULL,
            subtitle = v_subt) +
       si_style_nolines() +
+      scale_y_discrete(expand = expansion(mult = 0))+
       theme(axis.text = element_blank(),
-            plot.subtitle = element_markdown())
+            plot.subtitle = element_markdown(),
+            plot.margin = ggplot2::margin(0, 0, 0, 0, unit = "pt")
+            )
     
     
     if(export)
-      save_png(cntry, "dhi", "overview")
+      save_png(cntry, "dhi", "overview", height = .75, width = 5, scale = 1.05)
     
     return(v)
   }
