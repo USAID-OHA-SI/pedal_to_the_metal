@@ -120,7 +120,9 @@ df_viz <- prep_10s_barriers(df_tens)
 #Bar chart 
 viz_10s_barriers <- function(df, cntry) {
   
-  q <- glue::glue("What gaps exists in adopting structural laws/policies towards UNAIDS' 10-10-10 goals?") %>% toupper
+  q <- glue::glue("The largest gaps in the 10-10-10 goals"
+    #What gaps exists in adopting structural laws/policies towards UNAIDS' 10-10-10 goals?"
+    ) %>% toupper
   
   if(is.null(df) || nrow(df) == 0)
     return(dummy_plot(q))
@@ -139,41 +141,9 @@ viz_10s_barriers <- function(df, cntry) {
     ggplot2::scale_x_continuous(position = "top") +
     ggplot2::labs(x = NULL, y = NULL,
                   title = {q},
-                  subtitle = glue::glue("{unique(df$country)}'s progress towards adopting structural laws/policies towards UNAIDS' 10-10-10 goals"),
-                  caption = glue::glue("{metadata_pol_lab$caption} |  Ref id: {ref_id}")) +
-    glitr::si_style_nolines() +
-    ggplot2::theme(strip.placement = "outside",
-                   axis.text.x = ggplot2::element_blank())
-  
-}
-
-viz_10s_barriers(df_viz, "South Africa")
-
-# Icon Version  ------------------------------------------------------------------
-#use shapes instead of bars
-plot_viz_10s <- function(df, cntry) {
-  
-  if(is.null(df) || nrow(df) == 0)
-    return(dummy_plot(q))
-  
-  #Filter the dataframe by the specified country
-  df <- df %>% dplyr::filter(country == cntry)
-  
-  q <- glue::glue("THE LARGEST GAPS IN THE 10-10-10 GOALS IN {df$country}") %>% toupper
-  
-  ref_id <- "1b6b1dd7" #update plot identification
-  
-  df %>% 
-    ggplot2::ggplot(ggplot2::aes(x = n, forcats::fct_reorder(indicator_name, indicator_order, na.rm = TRUE))) +
-    ggplot2::geom_point(aes(color = fill_color), shape = 19, size = 16) + 
-    #ggplot2::facet_wrap(~forcats::fct_rev(adoption_level)) +
-    ggplot2::scale_color_identity() +
-    ggplot2::scale_x_continuous(position = "top") +
-    ggplot2::labs(x = "Status", y = NULL,
-                  title = {q},
-                  subtitle = glue::glue("<span style = 'font-weight: bold; color:#F8A27E'>Not Adopted </span> |
+                  subtitle = glue::glue("<span style = 'font-weight: bold;color:#5BB5D5'>Adopted</span> |
                                  <span style = 'font-weight: bold;color:#FBDC99'>Partially </span> |
-                                                <span style = 'font-weight: bold;color:#5BB5D5'>Adopted</span>"),
+                                                <span style = 'font-weight: bold; color:#F8A27E'>Not Adopted </span>"),
                   #subtitle = glue::glue("{unique(df$country)}'s progress towards adopting structural laws/policies towards UNAIDS' 10-10-10 goals"),
                   caption = glue::glue("{metadata_pol_lab$caption} |  Ref id: {ref_id}")) +
     glitr::si_style_nolines() +
@@ -184,51 +154,83 @@ plot_viz_10s <- function(df, cntry) {
   
 }
 
+viz_10s_barriers(df_viz, "South Africa")
 
-plot_viz_10s(df_viz, "South Africa")
-
-
-plot_viz_10s <- function(df, cntry) {
+# Icon Version  ------------------------------------------------------------------
+#use shapes instead of bars
+#plot_viz_10s <- function(df, cntry) {
   
-  if(is.null(df) || nrow(df) == 0)
-    return(dummy_plot(q))
+  #if(is.null(df) || nrow(df) == 0)
+   # return(dummy_plot(q))
   
   #Filter the dataframe by the specified country
-  df <- df %>% dplyr::filter(country == cntry)
+  #df <- df %>% dplyr::filter(country == cntry)
   
-  q <- glue::glue("THE LARGEST GAPS IN THE 10-10-10 GOALS IN {df$country}") %>% toupper
+  #q <- glue::glue("THE LARGEST GAPS IN THE 10-10-10 GOALS IN {df$country}") %>% toupper
   
-  ref_id <- "1b6b1dd7" #update plot identification
+  #ref_id <- "1b6b1dd7" #update plot identification
+  
+  #df %>% 
+   # ggplot2::ggplot(ggplot2::aes(x = n, forcats::fct_reorder(indicator_name, indicator_order, na.rm = TRUE))) +
+    #ggplot2::geom_point(aes(color = fill_color), shape = 19, size = 16) + 
+    #ggplot2::scale_color_identity() +
+    #ggplot2::scale_x_continuous(position = "top") +
+    #ggplot2::labs(x = "Status", y = NULL,
+                #  title = {q},
+                 # subtitle = glue::glue("<span style = 'font-weight: bold; color:#F8A27E'>Not Adopted </span> |
+                  #               <span style = 'font-weight: bold;color:#FBDC99'>Partially </span> |
+                   #                             <span style = 'font-weight: bold;color:#5BB5D5'>Adopted</span>"),
+                  # caption = glue::glue("{metadata_pol_lab$caption} |  Ref id: {ref_id}")) +
+    #glitr::si_style_nolines() +
+    #ggplot2::theme(strip.placement = "outside",
+     #              axis.text.x = ggplot2::element_blank(),
+      #             plot.subtitle = element_markdown(),
+       #            plot.margin = margin(0,0,0,0, unit = "pt"))
+  
+#}
+
+
+#plot_viz_10s(df_viz, "South Africa")
+
+
+#plot_viz_10s <- function(df, cntry) {
+  
+ # if(is.null(df) || nrow(df) == 0)
+  #  return(dummy_plot(q))
+  
+  #Filter the dataframe by the specified country
+  #df <- df %>% dplyr::filter(country == cntry)
+  
+  #q <- glue::glue("THE LARGEST GAPS IN THE 10-10-10 GOALS IN {df$country}") %>% toupper
+  
+  #ref_id <- "1b6b1dd7" #update plot identification
   
   #Set all points to a fixed position on the x-axis
-  df$adoption_level <- "Adopted" 
+  #df$adoption_level <- "Adopted" 
   
-  df %>% 
-    ggplot2::ggplot(ggplot2::aes(x = adoption_level, y = n, color = fill_color)) +
-    ggplot2::geom_point(shape = 19, size = 16) + 
-    ggplot2::facet_wrap(~forcats::fct_reorder(indicator_name, indicator_order, na.rm = TRUE),
-                        nrow = 1,
-                        labeller = label_wrap_gen(width = 20)) +
-    ggplot2::scale_color_identity() +
-    #ggplot2::scale_x_discrete() +
-    ggplot2::labs(x = NULL, y = NULL,
-                  title = {q},
-                  subtitle = glue::glue("<span style = 'font-weight: bold;color:#5BB5D5'>Adopted</span> |
-                                 <span style = 'font-weight: bold;color:#FBDC99'>Partially </span> |
-                                                <span style = 'font-weight: bold; color:#F8A27E'>Not Adopted </span>"),
-                  #subtitle = glue::glue("{unique(df$country)}'s progress towards adopting structural laws/policies towards UNAIDS' 10-10-10 goals"),
-                  caption = glue::glue("{metadata_pol_lab$caption} |  Ref id: {ref_id}")) +
-    glitr::si_style_nolines() +
-    ggplot2::theme(strip.placement = "outside",
-                   #axis.text.x = ggplot2::element_blank(),
-                   strip.text = element_text(hjust = 0.5),
-                   axis.text = element_blank(),
-                   plot.subtitle = element_markdown(),
-                   plot.margin = margin(0,0,0,0, unit = "pt")
-                   )
+  #df %>% 
+   # ggplot2::ggplot(ggplot2::aes(x = adoption_level, y = n, color = fill_color)) +
+    #ggplot2::geom_point(shape = 19, size = 16) + 
+    #ggplot2::facet_wrap(~forcats::fct_reorder(indicator_name, indicator_order, na.rm = TRUE),
+     #                   nrow = 1,
+      #                  labeller = label_wrap_gen(width = 20)) +
+    #ggplot2::scale_color_identity() +
+    #ggplot2::labs(x = NULL, y = NULL,
+     #             title = {q},
+      #            subtitle = glue::glue("<span style = 'font-weight: bold;color:#5BB5D5'>Adopted</span> |
+       #                          <span style = 'font-weight: bold;color:#FBDC99'>Partially </span> |
+        #                                        <span style = 'font-weight: bold; color:#F8A27E'>Not Adopted </span>"),
+                  #caption = glue::glue("{metadata_pol_lab$caption} |  Ref id: {ref_id}")) +
+    #glitr::si_style_nolines() +
+    #ggplot2::theme(strip.placement = "outside",
+                #strip.text = element_text(hjust = 0.5),
+                 #  axis.text = element_blank(),
+                  # plot.subtitle = element_markdown(),
+                  # plot.margin = margin(0,0,0,0, unit = "pt")
+                   #)
   
-}
+#}
 
-plot_viz_10s(df_viz, "Botswana")
+#plot_viz_10s(df_viz, "Botswana")
 
 # SPINDOWN ============================================================================
