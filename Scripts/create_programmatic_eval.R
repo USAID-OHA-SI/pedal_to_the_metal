@@ -221,8 +221,8 @@ print(plot)
 # OVC_ SERV (OVC_HIVSTAT pos + neg + test not req/ ovc ovc hiv stat_d) (<18)
 # TX_NET_NEW
 # Add:
-# IIT (combine three together)
 
 # Adjust coloring?
-# What to do about jitter for AGYW
+# Adjust x scales?
+# What to do about jitter for AGYW?
 # Fix Legend due to AGYW being default
