@@ -119,7 +119,6 @@
       scale_fill_identity() +
       coord_cartesian(clip = "off") +
       labs(x = NULL, y = NULL,
-           title = "HRH Staffing Summary" %>% toupper,
            subtitle = v_subt) +
       si_style_xgrid() +
       scale_y_discrete(expand = expansion(mult = 0.03)) +
@@ -128,12 +127,12 @@
             axis.text.x = element_blank(),
             plot.subtitle = element_markdown(hjust = 0.1),
             plot.title = element_text(hjust = 0.09),
-            panel.spacing = unit(.25, "line"),
+            panel.spacing = unit(0.3, "line"),
             plot.margin = ggplot2::margin(0, 0, 0, 0, unit = "pt")
             )
     
     if(export)
-      save_png(cntry, "hrh", scale = 0.5)
+      save_png(cntry, "hrh", scale = 0.65)
     
     return(v)
   }
