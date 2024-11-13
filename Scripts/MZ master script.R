@@ -374,3 +374,10 @@ global_1 <- global %>%
   df <- df %>%
     select(country, country_iso, everything())
   
+
+# WRITE CSV with "-" for NAs ----------------------------------------------
+
+  df %>% 
+    mutate(age_dep_d = str_remove_all(age_dep_d, " Dependency")) %>% 
+    write_csv("Dataout/COP_numerical_summary.csv", na = "-")
+  
