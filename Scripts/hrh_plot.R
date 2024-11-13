@@ -110,9 +110,9 @@
     #plot 
     v <- df_hrh_v_cntry %>% 
       ggplot(aes(value, fct_reorder(er_category, ordering, .fun = sum, .na_rm = TRUE), fill = fill_color)) +
-      geom_blank(aes(x = value*1.2)) +
-      geom_col(width = 0.9, na.rm = TRUE) +
-      geom_text(aes(label = val_fmt), hjust = -.15, na.rm = TRUE,
+      geom_blank(aes(x = value*1.25)) +
+      geom_col(width = 0.7, na.rm = TRUE) +
+      geom_text(aes(label = val_fmt), hjust = -.10, na.rm = TRUE,
                 family = "Source Sans Pro", color = matterhorn) +
       facet_grid(fct_rev(funding_agency) ~ fct_rev(type), scales = "free_x", switch = "y") +
       scale_x_continuous(labels = label_number(.1, scale_cut = cut_si(''))) +
@@ -122,14 +122,18 @@
            title = "HRH Staffing Summary" %>% toupper,
            subtitle = v_subt) +
       si_style_xgrid() +
+      scale_y_discrete(expand = expansion(mult = 0.03)) +
       theme(strip.text = element_text(hjust = .5),
             strip.placement = "outside",
             axis.text.x = element_blank(),
-            plot.subtitle = element_markdown(), 
-            panel.spacing = unit(.25, "line"))
+            plot.subtitle = element_markdown(hjust = 0.1),
+            plot.title = element_text(hjust = 0.09),
+            panel.spacing = unit(.25, "line"),
+            plot.margin = ggplot2::margin(0, 0, 0, 0, unit = "pt")
+            )
     
     if(export)
-      save_png(cntry, "hrh")
+      save_png(cntry, "hrh", scale = 0.5)
     
     return(v)
   }
