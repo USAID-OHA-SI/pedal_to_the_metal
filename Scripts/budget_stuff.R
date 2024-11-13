@@ -203,7 +203,7 @@
       summarise(cop_budget_total = sum(cop_budget_total, na.rm = TRUE),
                 .groups = "drop") %>% 
       group_by(country) %>% 
-      mutate(share = cop_budget_total/ sum(cop_budget_total)) %>% 
+      mutate(share = cop_budget_total / sum(cop_budget_total)) %>% 
       ungroup() %>% 
       mutate(pt_label = case_when(local_prime_partner == "Local" ~ 
                                     label_percent(1)(share)))
@@ -220,24 +220,27 @@
     
     v <- df_cntry %>% 
       ggplot(aes(cop_budget_total, country, fill = local_prime_partner)) +
-      geom_col(width = 0.5) +
+      geom_col(width = 0.05) +
       scale_fill_manual(values = c("Local" = si_palettes$hunter_t[1], 
                                    "International" = si_palettes$hunter_t[5], #grey20k, 
-                                   "Unknown"= si_palettes$hunter_t[5] #grey30k
+                                   "Unknown" = si_palettes$hunter_t[5] #grey30k
                                    )) +
       geom_text(aes(label = pt_label), na.rm = TRUE, color = si_palettes$hunter_t[1],
-                family = "Source Sans Pro", hjust = -.4, size = 11/.pt) +
+                family = "Source Sans Pro", hjust = -.25, size = 11/.pt) +
       labs(x = NULL, y = NULL,
-           title = glue("USAID BUDGET SHARE GOING TO <span style = 'color:{si_palettes$hunter_t[1]};'>LOCAL PARTNERS</span>"),
+           title = glue("USAID BUDGET TO <span style = 'color:{si_palettes$hunter_t[1]};'>LOCAL PARTNERS</span>"),
            subtitle = glue("FY{str_sub(df_cntry$fiscal_year, -2)} Budget [{unkwn_share} classified as 'Unknown']")) +
            #caption = "Note: Includes SCH") +
       si_style_nolines() +
+      scale_y_discrete(expand = expansion(mult = 0)) +
       theme(axis.text = element_blank(),
             plot.title = element_markdown(),
-            legend.position = "none") 
+            legend.position = "none",
+            plot.margin = ggplot2::margin(0, 0, 0, 0, unit = "pt")
+            )
     
     if(export)
-      save_png(cntry, "budget", "lp-share", height = 1, scale = 0.5)
+      save_png(cntry, "budget", "lp-share", height = .75, width = 5, scale = 1.05)
     
     return(v)
   }
