@@ -165,7 +165,7 @@
     
     #expand grid to avoid empty plots
     df_sys_cat <- df_sys_cat %>% 
-      right_join(expand_grid(fiscal_year = max(df_sys_cat$fiscal_year),
+      full_join(expand_grid(fiscal_year = max(df_sys_cat$fiscal_year),
                              country = pepfar_country_list$country,
                              funding_agency = c("USAID", "CDC"),
                              primary_system_category = unique(df_sys_cat$primary_system_category)),
@@ -186,7 +186,7 @@
       
       #ensure USAID and CDC have lines
       df_cntry <- df_cntry %>% 
-        right_join(expand_grid(funding_agency = c("USAID", "CDC")),
+        full_join(expand_grid(funding_agency = c("USAID", "CDC")),
                    by = join_by(funding_agency))
         
       v <-  df_cntry %>% 

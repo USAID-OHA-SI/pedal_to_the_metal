@@ -61,7 +61,7 @@
     
     #expand grid to avoid empty plots
     df_hrh_v <- df_hrh_v %>% 
-      right_join(expand_grid(fiscal_year = max(df_hrh_v$fiscal_year),
+      full_join(expand_grid(fiscal_year = max(df_hrh_v$fiscal_year),
                              country = pepfar_country_list$country,
                              funding_agency = c("CDC","USAID"),
                              er_category = unique(df_hrh_v$er_category)),
