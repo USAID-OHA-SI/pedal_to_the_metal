@@ -71,22 +71,26 @@
     
     v <- df_cntry %>% 
       ggplot(aes(fiscal_year, cop_budget_total, fill = fundingagency)) +
-      geom_col(position = "identity", width = 0.75) +
+      geom_col(position = "identity", width = 0.5) +
+      geom_errorbar(aes(ymin = cop_budget_total, ymax = cop_budget_total), 
+                    size = 0.5, width = 0.5, colour = grey50k, position = "identity") +
       geom_text(aes(label = pt_label), na.rm = TRUE, color = si_palettes$hunter_t[1],
                 family = "Source Sans Pro", vjust = -.4, size = 12/.pt) +
       scale_y_continuous(label = label_currency(scale = 1e-6, suffix = "m")) +
       scale_fill_manual(values = c("PEPFAR" = grey20k,
                                    "USAID" = si_palettes$hunter_t[1])) +
+      
       labs(x = NULL, y = NULL,
            title = glue("<span style = 'color:{si_palettes$hunter_t[1]};'>USAID'S</span> SHARE OF THE TOTAL PEPFAR BUDGET")) +
       si_style_ygrid() +
       theme(axis.text.y = element_blank(),
             legend.position ="none",
-            plot.title = element_markdown()
+            plot.title = element_markdown(),
+            plot.margin = ggplot2::margin(0, 0, 0, 0, unit = "pt")
       )
     
     if(export)
-      save_png(cntry, "budget", "trend")
+      save_png(cntry, "budget", "trend", scale = 0.5)
     
     return(v)
   }
