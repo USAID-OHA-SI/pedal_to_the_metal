@@ -93,7 +93,8 @@
       ) %>%
       compress_rows(font_size = 11) %>%
       tab_options(column_labels.hidden = TRUE) %>%
-      cols_hide(country)
+      cols_hide(country) %>% 
+      sub_missing(columns = everything(), missing_text = "-")
   }
 
   # Load UNAIDS data
@@ -115,13 +116,21 @@
       pivot_wider(names_from = "indicator", values_from = estimate) %>%
       rename_with(~ str_replace_all(., c(`.*Deaths.*` = "Deaths", `.*Infections.*` = "New Infections", `.*IMR.*` = "Incidence Mortality Rate"))) %>%
       pivot_longer(cols = where(is.double)) %>%
-      mutate(value_formatted = if_else(
-        is.numeric(value) & value >= 1000,
-        paste0(round(value / 1000), "K"),
-        as.character(value)
-      )) %>%
-      mutate(value_formatted = map(value_formatted, ~ I(glue::glue("<span>{.}</span>"))))
-  }
+      mutate(
+        value_formatted = if_else(
+          is.na(value), 
+          "-", 
+          if_else(value >= 1000, paste0(round(value / 1000), " k"), as.character(value))
+        ),
+        value_formatted = map(value_formatted, ~ I(glue::glue("<span>{.}</span>")))
+      )
+  }  
+  #     mutate(value = replace_na(value, "-"),
+  #     value_formatted = if_else(
+  #       is.numeric(value) & value >= 1000, paste0(round(value / 1000), " k"), as.character(value)
+  #     )) %>%
+  #    mutate(value_formatted = map(value_formatted, ~ I(glue::glue("<span>{.}</span>"))))
+  # }
 
 
   # Prepare epidemic control data
@@ -171,12 +180,13 @@
 # TEST ------------------------------------------------------------------
 
   # Create's a table for the default country
-  create_epi_tbl() %>% 
-    gt::gtsave("Images/Zambia.png")
+  create_epi_tbl("India") %>% 
+   
   
   cntry_list <- df %>%
     distinct(country) %>%
-    slice(1:10) %>%
     pull()
   
-  map(cntry_list, .f = ~ create_epi_tbl(.x))
+  # Check'em all!
+  map(cntry_list[1:3], .f = ~ create_epi_tbl(.x) %>% 
+        save_gt(.x, "epi", subtopic = "tbl"))
