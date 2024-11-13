@@ -72,9 +72,9 @@
     
     #expand grid to avoid empty plots
     df_sys <- df_sys %>% 
-      right_join(expand_grid(fiscal_year = max(df_sys$fiscal_year),
-                country = pepfar_country_list$country,
-                funding_agency = c("PEPFAR","USAID")),
+      full_join(expand_grid(fiscal_year = max(df_sys$fiscal_year),
+                            country = pepfar_country_list$country,
+                            funding_agency = c("PEPFAR","USAID")),
                 by = join_by(fiscal_year, country, funding_agency))
     
     
