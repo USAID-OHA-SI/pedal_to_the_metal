@@ -194,21 +194,31 @@
         
       v <-  df_cntry %>% 
         ggplot(aes(share, funding_agency, fill = fill_color)) +
-        geom_col(na.rm = TRUE) +
+        geom_blank(aes(share*1.2))+
+        geom_col(na.rm = TRUE, width = 0.25) +
         geom_text(aes(label = label_percent(1)(share)),
-                  na.rm = TRUE, hjust = -.3,
+                  na.rm = TRUE, hjust = -0.05,
                   family = "Source Sans Pro", color = matterhorn) +
-        facet_grid(~fct_rev(primary_system_category)) +
-        labs(x = NULL, y = NULL,
-             title = "Agency share of investments by HIS category" %>% toupper) +
+        #facet_grid(~fct_rev(primary_system_category)) +
+        facet_wrap(~fct_rev(primary_system_category), nrow = 1) +
+        labs(x = NULL, y = NULL) +
+             # title = "Agency share of investments by HIS category" %>% toupper) +
         scale_fill_identity() +
         coord_cartesian(clip = "off") +
         si_style_nolines() +
-        theme(axis.text.x = element_blank(),
-              legend.position = "none")
+        #scale_x_continuous(expand = c(0,0)) +
+        theme(
+          axis.text.x = element_blank(),
+          # axis.text.y = element_text(margin = margin(r = -5)), # Reduce margin on the right to bring y labels closer
+          # axis.ticks.y = element_blank(),                      # Remove y-axis ticks to eliminate extra space
+          legend.position = "none",
+          panel.spacing = unit(0.0, "lines"),                 # Reduce space between panels further
+          plot.margin = ggplot2::margin(0, 0, 0, 0, unit = "pt"),
+          strip.text = element_text(margin = margin(t = 0, r = 0, b = 0, l = 0))
+        ) 
       
       if(export)
-        save_png(cntry, "dhi", "cat")
+        save_png(cntry, "dhi", "cat", scale = 1.15, height = 0.5, width = 5)
       
       return(v)
       
