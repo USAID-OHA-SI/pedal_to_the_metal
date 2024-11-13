@@ -279,8 +279,8 @@ global_1 <- global %>%
     rename(age_dep = "2023 [YR2023]",
            country = "Country Name",
            country_iso = "Country Code") %>%
-    mutate(age_dep_d = case_when(age_dep > 58.13 ~ "High Dependency",
-                                             TRUE ~ "Low Dependency"),
+    mutate(age_dep_d = case_when(age_dep > 58.13 ~ "High Burden",
+                                             TRUE ~ "Low Burden"),
            age_dep = round(age_dep, 0)) %>%
     select(!country)
   ad$age_dep <- as.character(ad$age_dep)
@@ -299,9 +299,9 @@ global_1 <- global %>%
     mutate(nurses = round(nurses, 0))
   
   nurses_2 <- nurses_2 %>%
-    mutate(nurses_d = case_when(nurses <= 40 ~ "Low",
+    mutate(nurses_d = case_when(nurses <= 40 ~ "Below Adequate",
                                 nurses > 40 & nurses <= 100 ~ "Moderate",
-                                nurses > 100 ~ "High",
+                                nurses > 100 ~ "Optimal",
                                      TRUE ~ NA_character_)) %>%
     select(!Year) %>%
     mutate(country = case_when(country == "Myanmar" ~ "Burma",
@@ -333,7 +333,7 @@ global_1 <- global %>%
   gov <- gov %>%  
     mutate(h_exp_d = case_when(h_exp <= 10 ~ "Low",
                                h_exp > 10 & h_exp <= 15 ~ "Moderate",
-                               h_exp > 15 ~ "High")) %>%
+                               h_exp > 15 ~ "Optimal")) %>%
     select(!c(year, country)) %>%
     rename(country_iso = SpatialDimValueCode)
   gov$h_exp <- ifelse(!is.na(gov$h_exp), paste0(gov$h_exp, "%"), NA)
