@@ -212,7 +212,7 @@
           # axis.text.y = element_text(margin = margin(r = -5)), # Reduce margin on the right to bring y labels closer
           # axis.ticks.y = element_blank(),                      # Remove y-axis ticks to eliminate extra space
           legend.position = "none",
-          panel.spacing = unit(0.0, "lines"),                 # Reduce space between panels further
+          panel.spacing = unit(0.2, "lines"),                 # Reduce space between panels further
           plot.margin = ggplot2::margin(0, 0, 0, 0, unit = "pt"),
           strip.text = element_text(margin = margin(t = 0, r = 0, b = 0, l = 0))
         ) 
@@ -231,3 +231,66 @@
   # map(v_countries[20],
   #     ~plot_dhi_cat(df_sys_cat, .x, FALSE))
   # 
+    
+    
+    make_dhi_cat_table <- function(df, cntry){
+      
+      custom_palette <- colorRampPalette(c(si_palettes$viking_t[1], si_palettes$viking_t[5]))(20)
+      
+      df_cntry <- df %>% 
+        filter(country == cntry) %>% 
+        mutate(primary_system_category = fct_reorder(primary_system_category, estimated_budget, sum),
+               primary_system_category = fct_relevel(primary_system_category, "Other", after = 0)) %>% 
+        filter(estimated_budget > 0)
+      
+      #ensure USAID and CDC have lines
+      df_cntry <- df_cntry %>% 
+        full_join(expand_grid(funding_agency = c("USAID", "CDC")),
+                  by = join_by(funding_agency))  
+      
+      df_cntry %>% 
+        select(country, funding_agency, primary_system_category, share) %>% 
+        pivot_wider(names_from = primary_system_category,
+                    values_from = share) %>% 
+        mutate(agency = fct_relevel(funding_agency, c("USAID", "CDC"))) %>% 
+        arrange(agency) %>% 
+        select(-country, -funding_agency) %>% 
+        select(agency, everything()) %>% 
+        gt() %>% 
+        fmt_percent(columns = where(is.double),
+                    decimal = 0) %>% 
+        sub_missing(columns = where(is.double),
+                    missing_text = "-") %>% 
+        cols_label(agency = "") %>% 
+        gtExtras::gt_color_rows(
+          columns = where(is.double),  # Specify columns that need coloring
+          domain = c(0, 1),            # Domain of the data to scale the colors
+          palette = c(si_palettes$viking_t[1], si_palettes$viking_t[5]),  # Custom color palette
+          alpha = 0.7,   
+          reverse = TRUE, # Transparency level
+          na.color = grey10k # No fill for missing values
+        ) %>% 
+        tab_style(
+          style = cell_borders(
+            sides = c("bottom", "left", "right"),  # Specify all sides for stroke
+            color = "white",                              # Set border color to white
+            weight = px(1)                                # Thickness of the border
+          ),
+          locations = cells_body(columns = where(is.numeric))  # Apply to entire table body
+        ) %>% 
+        cols_width(
+          agency ~ px(50),    # Set the column 'mpg' to have a width of 100 pixels
+          everything() ~ px(80)  # Set all other columns to have a width of 150 pixels
+        ) %>% 
+        tab_style(
+          style = cell_text(align = "left"),  # Align text to the right
+          locations = cells_body(
+            columns = agency)  # Target specific columns (e.g., mpg and cyl)
+          ) %>% 
+        compress_rows(font_size = 14) 
+      
+      }
+    
+    make_dhi_cat_table(df_sys_cat, "Zambia") 
+
+    
