@@ -288,7 +288,7 @@
         compress_rows(font_size = 14) 
       
       if(export)
-        save_gt(cntry, "dhi", "cat-tbl")
+        save_gt(t, cntry, "dhi", "cat-tbl")
       
       }
 
