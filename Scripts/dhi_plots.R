@@ -163,7 +163,7 @@
       mutate(share = estimated_budget /sum(estimated_budget)) %>% 
       ungroup() %>% 
       filter(funding_agency %in% c("USAID", "CDC")) %>% 
-      mutate(fill_color = ifelse(funding_agency == "USAID", si_palettes$hunter_t[1], "gray80"))
+      mutate(fill_color = ifelse(funding_agency == "USAID", si_palettes$hunter_t[1], slate))
     
     
     #expand grid to avoid empty plots
