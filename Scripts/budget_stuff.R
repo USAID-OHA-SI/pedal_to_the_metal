@@ -197,7 +197,7 @@
     
     df_lp <- df %>% 
       filter(fiscal_year == max(fiscal_year),
-             funding_agency %in% c("USAID", "USAID/WCF")) %>%
+             funding_agency %in% c("USAID")) %>% #"USAID/WCF"
       remove_mo() %>% 
       mutate(local_prime_partner = ifelse(mech_name == "TBD" | prime_partner_name == "TBD", "TBD", local_prime_partner),
              local_prime_partner = factor(local_prime_partner, ptnr_type) %>% fct_rev()) %>% 
