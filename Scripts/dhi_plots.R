@@ -59,7 +59,6 @@
     df_sys <- df %>% 
       bind_rows(df %>% 
                   mutate(funding_agency = "PEPFAR")) %>% 
-      rename(fiscal_year = dhi_submission_fiscal_year) %>% 
       clean_agency() %>% 
       filter(fiscal_year == max(fiscal_year),
              dhi_question_code == "estimated_budget") %>% 
@@ -86,7 +85,7 @@
       ungroup()
     
     df_sys <- df_sys %>%
-      mutate(fill_color = ifelse(funding_agency == "USAID", si_palettes$hunter_t[1], "gray80"),
+      mutate(fill_color = ifelse(funding_agency == "USAID", si_palettes$hunter_t[1], slate),
              funding_agency = fct_relevel(funding_agency, "USAID") %>% fct_rev(),
              fill_color = fct_rev(fill_color))
     
@@ -146,7 +145,6 @@
   prep_dhi_cat <- function(df){
     
     df_sys_cat <- df %>% 
-      rename(fiscal_year = dhi_submission_fiscal_year) %>% 
       clean_agency() %>% 
       filter(fiscal_year == max(fiscal_year),
              dhi_question_code == "estimated_budget") %>% 
