@@ -42,7 +42,7 @@ process_achievement_data <- function(df, cntry, meta) {
   df %>%
     filter(country == cntry,
            indicator %in% c("TX_CURR", "TX_PVLS", "TX_PVLS_D", 
-                            "PMTCT_EID", "OVC_SERV", "AGYW_PREV",
+                            "PMTCT_EID", "OVC_SERV_UNDER_18", "AGYW_PREV",
                             "PrEP_NEW", "TX_NET_NEW", "TX_ML_IIT_less_three_mo",
                             "TX_ML_IIT_six_more_mo", "TX_ML_IIT_three_five_mo")) %>%
     mutate(type = case_when(
@@ -55,8 +55,7 @@ process_achievement_data <- function(df, cntry, meta) {
     summarise(across(c(targets, cumulative), ~ sum(.x, na.rm = TRUE)),
               .groups = "drop") %>%
     #Filter out rows where specific indicators have targets == 0
-    filter(!(indicator %in% c("AGYW_PREV", "OVC_SERV", "PMTCT_EID", "PrEP_NEW") & targets == 0)) %>%
-    
+    filter(!(indicator %in% c("AGYW_PREV", "OVC_SERV_UNDER_18", "PMTCT_EID", "PrEP_NEW") & targets == 0)) %>%
     gophr::clean_agency() %>%
     gophr::adorn_achievement(qtr = meta$curr_qtr) %>%
     filter(!is.na(type))
@@ -79,9 +78,12 @@ process_viral_load_data <- function(df, cntry, meta) {
     group_by(fiscal_year, country, psnu, funding_agency, indicator, type) %>%
     summarise(cumulative = sum(cumulative, na.rm = TRUE),
               .groups = "drop") %>%
-    pivot_wider(names_from = indicator,
+    pivot_wider(names_from = indicator, # Pivot wide to perform calculations
                 values_from = cumulative,
                 names_glue = "{tolower(indicator)}") %>%
+    
+    # Add all three IIT categories together and divide by TX CURR
+    # Calculate VLS and VLC
     mutate(iit = (tx_ml_iit_less_three_mo + tx_ml_iit_six_more_mo + tx_ml_iit_three_five_mo)/tx_curr,
            vlc = tx_pvls_d / tx_curr_lag2,
            vls = tx_pvls / tx_pvls_d) %>%
@@ -99,16 +101,16 @@ process_viral_load_data <- function(df, cntry, meta) {
       ),
       achievement = if_else(indicator %in% c("vlc", "vls", "iit"), value, NA_real_)
     ) %>%
-    mutate(
-      achv_color = case_when(
-        indicator == "vls" & achievement > 0.95 ~ "#697EBC",
-        indicator == "vls" & achievement <= 0.95 ~ "#F8A27E",
-        indicator == "vlc" & achievement > 0.90 ~ "#697EBC",
-        indicator == "vlc" & achievement <= 0.90 ~ "#F8A27E",
-        TRUE ~ NA_character_
-      )
-    ) %>%
-    select(fiscal_year, country, psnu, funding_agency, indicator, type, cumulative, achievement, achv_color)
+    # mutate(
+    #   achv_color = case_when(
+    #     indicator == "vls" & achievement > 0.95 ~ "#697EBC",
+    #     indicator == "vls" & achievement <= 0.95 ~ "#F8A27E",
+    #     indicator == "vlc" & achievement > 0.90 ~ "#697EBC",
+    #     indicator == "vlc" & achievement <= 0.90 ~ "#F8A27E",
+    #     TRUE ~ NA_character_
+    #   )
+    # ) %>%
+    select(fiscal_year, country, psnu, funding_agency, indicator, type, cumulative, achievement)
 }
 
 combine_data <- function(df_achv, df_vl_vs) {
@@ -117,15 +119,14 @@ combine_data <- function(df_achv, df_vl_vs) {
 
 # VIZ ---------------------------------------------------------------------
 
-# Custom Jitter Function to Normalize Size Based on Indicator
 custom_jitter <- function(df, jitter_factor = 0.05) {
   df %>%
-    group_by(indicator) %>%  # Group by indicator to normalize each indicator separately
+    group_by(indicator, type) %>%  # Group by indicator to normalize each indicator separately
     filter(funding_agency %in% c("USAID", "CDC", "DEFAULT")) %>%
     mutate(
       # Jitter for visualization
       y_jitter = case_when(
-        funding_agency == "USAID" ~ runif(n(), .01, jitter_factor),
+        funding_agency == "USAID" ~ runif(n(), .01, jitter_factor), # Could adjust these values as needed
         funding_agency == "CDC" ~ runif(n(), -jitter_factor, -.01),
         funding_agency == "DEFAULT" ~ runif(n(), -jitter_factor/2, jitter_factor/2),
         TRUE ~ 0
@@ -138,10 +139,10 @@ custom_jitter <- function(df, jitter_factor = 0.05) {
 process_achievement_viz <- function(df_combined, cntry, jitter_factor) {
   df_achv_viz <- df_combined %>%
     filter(country == cntry) %>%
-    filter(indicator %in% c("vlc", "vls", "PrEP_NEW", "OVC_SERV", "AGYW_PREV", "TX_NET_NEW", "PMTCT_EID", "iit")) %>%
-    filter(!(indicator %in% c('OVC_SERV', "AGYW_PREV") & type != "Total"))%>%
+    filter(indicator %in% c("vlc", "vls", "PrEP_NEW", "OVC_SERV_UNDER_18", "AGYW_PREV", "TX_NET_NEW", "PMTCT_EID", "iit")) %>%
+    filter(!(indicator %in% c('OVC_SERV_UNDER_18', "AGYW_PREV") & type != "Total"))%>% # Only report OVC and AGYW as Total
     mutate(type = factor(type, levels = c("Total", "KeyPop", "Peds", "AGYW", "Males (15+)")),
-           indicator = factor(indicator, levels = c("vlc", "vls", "PrEP_NEW", "TX_NET_NEW", "iit", "PMTCT_EID", "OVC_SERV", "AGYW_PREV"))) %>%
+           indicator = factor(indicator, levels = c("vlc", "vls", "PrEP_NEW", "TX_NET_NEW", "iit", "PMTCT_EID", "OVC_SERV_UNDER_18", "AGYW_PREV"))) %>%
     custom_jitter(jitter_factor) %>%  # Apply the custom jitter function
     
     
@@ -149,23 +150,26 @@ process_achievement_viz <- function(df_combined, cntry, jitter_factor) {
 }
 
 generate_plot <- function(df_achv_viz, meta, cntry) {
+  # Baseline point for line with ticks
   baseline_pt_1 <- 0
   baseline_pt_2 <- .25
   baseline_pt_3 <- .5
   baseline_pt_4 <- .75
   baseline_pt_5 <- 1
   
-  View(df_achv_viz)
-  
   df_achv_viz %>%
-    mutate(indicator = recode(indicator, 
-                              "vls" = "VLS", 
-                              "vlc" = "VLC",
-                              "iit" = "IIT")) %>% # For display 
+    # Adjust df for plot
+    mutate(
+      funding_agency = recode(funding_agency, "DEFAULT" = "PEPFAR"), # Display DEFAULT (i.e. No Agency) as PEPFAR
+      funding_agency = factor(funding_agency, levels = c("USAID", "CDC", "PEPFAR")),
+      indicator = recode(indicator, "vls" = "VLS", "vlc" = "VLC", "iit" = "IIT", "OVC_SERV_UNDER_18" = "OVC_SERV (<18)") # For display purposes
+    ) %>%
+    # Plot setup
     ggplot(aes(achievement, y_jitter, color = funding_agency)) +
-    geom_point(na.rm = TRUE, alpha = .5, size = 2) +
-    scale_shape_manual(values = c("USAID" = 16, "CDC" = 18, "DEFAULT" = 15)) +
-    scale_color_manual(values = c("USAID" = midnight_blue, "CDC" = viking, "DEFAULT" = slate)) +
+    geom_point(na.rm = TRUE, alpha = .4, size = 2, shape = 16) + # Adjust size as needed
+    scale_color_manual(values = c("USAID" = midnight_blue, "CDC" = viking, "PEPFAR" = slate),
+                       name = "Funding Agency",
+                       labels = c("USAID", "CDC", "PEPFAR")) +
     facet_grid(rows = vars(indicator), cols = vars(type), scales = "free_y", switch = "y") +
     theme(strip.text = element_markdown()) +
     scale_x_continuous(
@@ -174,12 +178,16 @@ generate_plot <- function(df_achv_viz, meta, cntry) {
       labels = c("0%", "50%", "100%"),
       oob = scales::squish
     ) +
+    
+    # Line range with ticks
     geom_linerange(aes(xmin = 0, xmax = 1.1, y = 0), color = "#D3D3D3") +
     geom_point(aes(x = baseline_pt_1, y = 0), shape = 3, color = "#D3D3D3") +
     geom_point(aes(x = baseline_pt_2, y = 0), shape = 3, color = "#D3D3D3") +
     geom_point(aes(x = baseline_pt_3, y = 0), shape = 3, color = "#D3D3D3") +
     geom_point(aes(x = baseline_pt_4, y = 0), shape = 3, color = "#D3D3D3") +
     geom_point(aes(x = baseline_pt_5, y = 0), shape = 3, color = "#D3D3D3") +
+    
+    #Formatting
     si_style_nolines() +
     theme(strip.text = element_markdown(hjust = .5),
           strip.text.y.left = element_text(angle = 0, vjust = 0.5, hjust = 1),
@@ -187,42 +195,43 @@ generate_plot <- function(df_achv_viz, meta, cntry) {
           axis.text.y = element_blank()) +
     coord_cartesian(clip = "off") +
     labs(x = NULL, y = NULL,
-         title = glue("{cntry} Target Acheivement FY{meta$curr_fy}Q{meta$curr_qtr}by psnu") %>% toupper,
+         # Change this as needed for the PDF
+         title = glue("{cntry} Target Acheivement FY{meta$curr_fy}Q{meta$curr_qtr} by psnu") %>% toupper,
          caption = glue("Target achievement capped at 110% Source: {meta$source} US Agency for International Development")) +
     theme(axis.text.x = element_text(),
           axis.text.y = element_blank(),
           strip.text = element_markdown(),
-          panel.spacing.y = unit(2, "lines")) +
+          panel.spacing.y = unit(2, "lines")) + # Adjust for spacing
     guides(size = "none", shape = guide_legend())
 }
 
 # RUN FUNCTION ---------------------------------------------------------------
 
 run_achievement_analysis <- function(df, cntry, meta, jitter_factor) {
+  # Get achievement data
   df_achv <- process_achievement_data(df, cntry, meta)
+  # Get mutated VLS/VLC data
   df_vl_vs <- process_viral_load_data(df, cntry, meta)
-  View(df_vl_vs)
+  # Combine them
   df_combined <- combine_data(df_achv, df_vl_vs)
+  # Set data up to be visualized
   df_achv_viz <- process_achievement_viz(df_combined, cntry, jitter_factor)
-  View(df_achv_viz)
-  print(n_distinct(df_achv_viz$psnu))
+  # Plot
   plot <- generate_plot(df_achv_viz, meta, cntry)
   return(plot)
 }
 
 
 # Example usage:
-plot <- run_achievement_analysis(df, "Tanzania", meta, .05)
+plot <- run_achievement_analysis(df, cntry, meta, .05)
 print(plot)
 
 
 ################## TO DO #################################################
-# Fix:
-# OVC_ SERV (OVC_HIVSTAT pos + neg + test not req/ ovc ovc hiv stat_d) (<18)
-# TX_NET_NEW
-# Add:
-
-# Adjust coloring?
+# Fix any labeling (i.e. OVC_SERV_UNDER_18)
+# What to do about TX_NET_NEW?
+# Cut Top 80%?
 # Adjust x scales?
-# What to do about jitter for AGYW?
-# Fix Legend due to AGYW being default
+# What to do about jitter for AGYW? Currently its randomly distributed.
+
+
