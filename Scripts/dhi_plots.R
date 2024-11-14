@@ -182,13 +182,12 @@
       df_cntry <- df %>% 
         filter(country == cntry) %>% 
         mutate(primary_system_category = fct_reorder(primary_system_category, estimated_budget, sum),
-               primary_system_category = fct_relevel(primary_system_category, "Other", after = 0)) %>% 
-        filter(estimated_budget > 0)
+               primary_system_category = fct_relevel(primary_system_category, "Other", after = 0))
       
-      #ensure USAID and CDC have lines
-      df_cntry <- df_cntry %>% 
-        full_join(expand_grid(funding_agency = c("USAID", "CDC")),
-                   by = join_by(funding_agency))
+      # #ensure USAID and CDC have lines
+      # df_cntry <- df_cntry %>% 
+      #   full_join(expand_grid(funding_agency = c("USAID", "CDC")),
+      #              by = join_by(funding_agency))
         
       v <-  df_cntry %>% 
         ggplot(aes(share, funding_agency, fill = fill_color)) +
@@ -238,15 +237,14 @@
       df_cntry <- df %>% 
         filter(country == cntry) %>% 
         mutate(primary_system_category = fct_reorder(primary_system_category, estimated_budget, sum),
-               primary_system_category = fct_relevel(primary_system_category, "Other", after = 0)) %>% 
-        filter(estimated_budget > 0)
+               primary_system_category = fct_relevel(primary_system_category, "Other", after = 0)) 
       
       #ensure USAID and CDC have lines
-      df_cntry <- df_cntry %>% 
-        full_join(expand_grid(funding_agency = c("USAID", "CDC")),
-                  by = join_by(funding_agency))  
+      # df_cntry <- df_cntry %>%
+      #   full_join(expand_grid(funding_agency = c("USAID", "CDC")),
+      #             by = join_by(funding_agency))
       
-      df_cntry %>% 
+      t <- df_cntry %>% 
         select(country, funding_agency, primary_system_category, share) %>% 
         pivot_wider(names_from = primary_system_category,
                     values_from = share) %>% 
@@ -289,6 +287,8 @@
       
       if(export)
         save_gt(t, cntry, "dhi", "cat-tbl")
+      
+      return(t)
       
       }
 
