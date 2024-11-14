@@ -4,7 +4,7 @@
 # REF ID:   9c6a789d 
 # LICENSE:  MIT
 # DATE:     2024-10-31
-# UPDATED:  2024-11-13
+# UPDATED:  2024-11-14
 
 # DEPENDENCIES ------------------------------------------------------------
   
@@ -48,14 +48,14 @@
   prep_bdgt_trend <- function(df){
     
     df_budget_trend <- df %>%
-      bind_rows(df %>% mutate(fundingagency = "PEPFAR")) %>%
-      mutate(fundingagency = ifelse(str_detect(fundingagency, "USAID"), "USAID", fundingagency)) %>%
-      filter(fundingagency %in% c("USAID", "PEPFAR"),
+      bind_rows(df %>% mutate(funding_agency = "PEPFAR")) %>%
+      mutate(funding_agency = ifelse(str_detect(funding_agency, "USAID"), "USAID", funding_agency)) %>%
+      filter(funding_agency %in% c("USAID", "PEPFAR"),
              fiscal_year >= 2021) %>% 
-      group_by(fiscal_year, country, fundingagency) %>% 
+      group_by(fiscal_year, country, funding_agency) %>% 
       summarise(cop_budget_total = sum(cop_budget_total, na.rm = TRUE),
                 .groups = "drop") %>% 
-      mutate(pt_label = case_when(fundingagency == "USAID" ~ 
+      mutate(pt_label = case_when(funding_agency == "USAID" ~ 
                                     label_currency(1, scale = 1e-6, suffix = "m")(cop_budget_total)))
     
     #TODO - should this exclude SCH?
@@ -70,7 +70,7 @@
       filter(country == {cntry})
     
     v <- df_cntry %>% 
-      ggplot(aes(fiscal_year, cop_budget_total, fill = fundingagency)) +
+      ggplot(aes(fiscal_year, cop_budget_total, fill = funding_agency)) +
       geom_col(position = "identity", width = 0.5) +
       geom_errorbar(aes(ymin = cop_budget_total, ymax = cop_budget_total), 
                     linewidth = 0.5, width = 0.5, colour = grey50k, position = "identity") +
@@ -109,7 +109,7 @@
     
     df_budget_tbl <- df %>% 
       select(-pt_label) %>% 
-      pivot_wider(names_from = fundingagency,
+      pivot_wider(names_from = funding_agency,
                   values_from = cop_budget_total) %>% 
       mutate(`USAID share` = USAID/PEPFAR) %>%
       pivot_longer(-c(fiscal_year, country),
@@ -197,7 +197,7 @@
     
     df_lp <- df %>% 
       filter(fiscal_year == max(fiscal_year),
-             fundingagency %in% c("USAID", "USAID/WCF")) %>%
+             funding_agency %in% c("USAID", "USAID/WCF")) %>%
       remove_mo() %>% 
       mutate(local_prime_partner = ifelse(mech_name == "TBD" | prime_partner_name == "TBD", "TBD", local_prime_partner),
              local_prime_partner = factor(local_prime_partner, ptnr_type) %>% fct_rev()) %>% 
