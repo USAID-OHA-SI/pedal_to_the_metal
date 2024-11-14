@@ -73,7 +73,7 @@
       ggplot(aes(fiscal_year, cop_budget_total, fill = fundingagency)) +
       geom_col(position = "identity", width = 0.5) +
       geom_errorbar(aes(ymin = cop_budget_total, ymax = cop_budget_total), 
-                    size = 0.5, width = 0.5, colour = grey50k, position = "identity") +
+                    linewidth = 0.5, width = 0.5, colour = grey50k, position = "identity") +
       geom_text(aes(label = pt_label), na.rm = TRUE, color = si_palettes$hunter_t[1],
                 family = "Source Sans Pro", vjust = -.4, size = 12/.pt) +
       scale_y_continuous(label = label_currency(scale = 1e-6, suffix = "m")) +
