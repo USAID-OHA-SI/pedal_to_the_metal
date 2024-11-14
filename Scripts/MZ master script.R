@@ -1,11 +1,12 @@
 
-remotes::install_github("USAID-OHA-SI/mindthegap", ref = "dev_edms_plot")
+#remotes::install_github("USAID-OHA-SI/mindthegap", ref = "dev_edms_plot")
 library(mindthegap)
 library(googlesheets4)
 library(tidyverse)
 library(glue)
 library(gagglr)
 
+load_secrets()
 # Functions and datasets ------------
 clean_number <- function(x, digits = 0){
   dplyr::case_when(x >= 1e9 ~ glue("{round(x/1e9, digits)}b"),
@@ -378,6 +379,7 @@ global_1 <- global %>%
 # WRITE CSV with "-" for NAs ----------------------------------------------
 
   df %>% 
-    mutate(age_dep_d = str_remove_all(age_dep_d, " Dependency")) %>% 
+    mutate(age_dep_d = str_remove_all(age_dep_d, " Burden"),
+           nurses_d = str_remove_all(nurses_d, " Adequate")) %>% 
     write_csv("Dataout/COP_numerical_summary.csv", na = "-")
   
