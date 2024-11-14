@@ -45,7 +45,7 @@
 # BUDGET TREND ------------------------------------------------------------
 
   #budget trend
-  prep_bdgt_trend <- function(df, cntry){
+  prep_bdgt_trend <- function(df){
     
     df_budget_trend <- df %>%
       bind_rows(df %>% mutate(fundingagency = "PEPFAR")) %>%
