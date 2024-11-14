@@ -9,21 +9,21 @@
 # LOCALS & SETUP ============================================================================
 
   # Libraries
-    library(gagglr)
-    library(tidyverse)
-    library(scales)
-    library(sf)
-    library(systemfonts)
-    library(tidytext)
-    library(patchwork)
-    library(ggtext)
-    library(glue)
-    library(gt)
-    library(gtExtras)
-    library(googlesheets4)
-    library(readxl)
-    library(fontawesome)
-    
+    # library(gagglr)
+    # library(tidyverse)
+    # library(scales)
+    # library(sf)
+    # library(systemfonts)
+    # library(tidytext)
+    # library(patchwork)
+    # library(ggtext)
+    # library(glue)
+    # library(gt)
+    # library(gtExtras)
+    # library(googlesheets4)
+    # library(readxl)
+    # library(fontawesome)
+    # 
     
   # SI specific paths/functions  
   #   load_secrets()
@@ -213,7 +213,7 @@
             #ggplot2::facet_wrap(~forcats::fct_rev(adoption_level)) +
             ggplot2::scale_color_identity() +
             ggplot2::scale_x_discrete(, position = "top") +
-                        #ggplot2::scale_x_continuous(position = "top") +
+            ggplot2::scale_y_discrete(position = "right") +
             ggplot2::labs(x = "Status", y = NULL,
                           title = "GAPS IN THE 10-10-10 GOALS",
                           subtitle = glue::glue("<span style = 'font-weight: bold; color:#f47d35'>Not Adopted </span> |

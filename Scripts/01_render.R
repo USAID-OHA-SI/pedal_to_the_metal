@@ -22,12 +22,14 @@
   library(ggtext)
   library(gt)
   library(fontawesome)
+  library(googlesheets4)
   
   source("Scripts/save_png.R")
   source("Scripts/save_gt.R")
   source("Scripts/budget_stuff.R")
   source("Scripts/hrh_plot.R")
   source("Scripts/dhi_plots.R")  
+  source("Scripts/10-10-10s.R")
 
 # GLOBAL VARIABLES --------------------------------------------------------
   
@@ -202,5 +204,18 @@
   ## CLEAR DHI data -----
   rm(df_sys, df_sys_cat)
   si_clear_preview()
+  
+
+# 10s Plots ---------------------------------------------------------------
+
+  # Chunks for loading and working with 10s
+  df_tens <- load_tens()
+  
+  df_tens_viz <- prep_10s_barriers(df_tens)
+  dotplot_viz_10s(df_tens_viz, "Zambia")
+  
+  #iterate
+  walk(v_countries,
+       ~dotplot_viz_10s(df_tens_viz, .x))
   
   
