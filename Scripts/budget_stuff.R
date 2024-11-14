@@ -111,7 +111,7 @@
       select(-pt_label) %>% 
       pivot_wider(names_from = funding_agency,
                   values_from = cop_budget_total) %>% 
-      mutate(`USAID share` = USAID/PEPFAR) %>%
+      mutate(share = USAID/PEPFAR) %>%
       pivot_longer(-c(fiscal_year, country),
                    names_to = "type") %>% 
       group_by(country, type) %>% 
@@ -120,7 +120,7 @@
                                    TRUE ~ "flat")) %>% 
       ungroup() %>% 
       filter(fiscal_year == max(fiscal_year)) %>% 
-      mutate(val_fmt = ifelse(type == "USAID share",
+      mutate(val_fmt = ifelse(type == "share",
                               percent_format(1)(value),
                               label_currency(1, scale = 1e-6, suffix = "m")(value))
              
@@ -145,33 +145,45 @@
   plot_budget_tbl <- function(df, cntry, export = TRUE){
     
     df_cntry <- df %>% 
-      filter(country == {cntry})
+      filter(country == {cntry}) %>% 
+      select(-c(fiscal_year, country)) 
     
-    t <- df_cntry %>% 
+    df_cntry_wide <- df_cntry %>% 
+      pivot_wider(names_from = type,
+                  values_from = c(val_fmt, direction),
+                  names_glue = "{type}_{.value}") %>% 
+      select(PEPFAR = PEPFAR_val_fmt,
+             PEPFAR_direction,
+             USAID = USAID_val_fmt,
+             USAID_direction,
+             share = share_val_fmt,
+             share_direction)
+      
+    t <- df_cntry_wide %>% 
       gt() %>%
-      cols_hide(c(fiscal_year, country)) %>% 
       # Transform the 'direction' column to include icons
       text_transform(
-        locations = cells_body(columns = direction),
+        locations = cells_body(columns = matches("direction")),
         fn = function(x) {
           case_when(
-            x == "increase" ~ fa("chevron-up", fill = si_palettes$hunter_t[3]) %>% as.character,
-            x == "decrease" ~ fa("chevron-down", fill = orchid_bloom) %>% as.character,
+            x == "increase" ~ fa("chevron-up", fill = viking) %>% as.character,
+            x == "decrease" ~ fa("chevron-down", fill = si_palettes$orchid_bloom_t[2]) %>% as.character,
             x == "flat"     ~ fa("chevron-right", fill = grey20k) %>% as.character
           )
         }
       ) %>% 
+      cols_label(PEPFAR_direction  = "",
+                 USAID_direction = "",
+                 share_direction = "") %>% 
       cols_align(align = "right",
-                 columns = "val_fmt") %>% 
-      cols_align(align = "center",
-                 columns = direction) %>% 
-      tab_options(column_labels.hidden = TRUE) %>% 
+                 columns = c(PEPFAR, USAID, share)) %>% 
+      # tab_options(column_labels.hidden = TRUE) %>% 
       # tab_header(title = glue("BUDGET FY{unique(df$fiscal_year) %>% str_sub(-2)}")) %>% 
       opt_align_table_header(align = "left") %>% 
       compress_rows(font_size = 11) 
     
     if(export)
-      save_gt(t, "budget", "tbl")
+      save_gt(t, cntry, "budget", "tbl")
     
     return(t)
     
