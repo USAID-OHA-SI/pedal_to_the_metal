@@ -65,7 +65,7 @@
   
   df_hrh <- read_psd(path_hrh)
   
-  df_dhi <- vroom(path_dhi)
+  df_dhi <- read_psd(path_dhi)
 
 
 # BUDGET SECTION ----------------------------------------------------------
