@@ -8,26 +8,26 @@
 
 # DEPENDENCIES ------------------------------------------------------------
 
-  # General Libraries
-  library(tidyverse)
-  library(glue)
-  
-  # USAID-Specific Libraries
-  library(gagglr)
-  
-  # Visualization Extensions
-  library(scales, warn.conflicts = FALSE)
-  library(systemfonts)
-  library(tidytext)
-  library(patchwork)
-  library(ggtext)
-  library(mindthegap)
-  library(fontawesome)
-  library(gt)
+  # # General Libraries
+  # library(tidyverse)
+  # library(glue)
+  # 
+  # # USAID-Specific Libraries
+  # library(gagglr)
+  # 
+  # # Visualization Extensions
+  # library(scales, warn.conflicts = FALSE)
+  # library(systemfonts)
+  # library(tidytext)
+  # library(patchwork)
+  # library(ggtext)
+  # library(mindthegap)
+  # library(fontawesome)
+  # library(gt)
 
 # GLOBAL VARIABLES --------------------------------------------------------
 
-  ref_id <- "1166f85f" # a reference to be places in viz captions
+  #ref_id <- "1166f85f" # a reference to be places in viz captions
   
   GOAL <- 95
   TARGET_YEAR <- 2023
@@ -53,8 +53,8 @@
     # Use case_when() to create a vectorized condition
     fills <- dplyr::case_when(
       is.na(x) ~ glitr::grey20k,
-      x == TRUE ~ glitr::hw_hunter,
-      x == FALSE ~ glitr::hw_orchid_bloom,
+      x == TRUE ~ glitr::hw_viking,
+      x == FALSE ~ glitr::si_palettes$orchid_bloom_t[2],
       TRUE ~ NA_character_
     )
   
@@ -172,21 +172,21 @@
 
 # LOAD DATA ---------------------------------------------------------------
 
-  df <- load_and_filter_data()
-  df_epi_stats <- prepare_epi_stats(df)
-  df_epi_cntrl <- prepare_epi_control(df)
-  df_95s <- prepare_95s_summary(df)
+  # df <- load_and_filter_data()
+  # df_epi_stats <- prepare_epi_stats(df)
+  # df_epi_cntrl <- prepare_epi_control(df)
+  # df_95s <- prepare_95s_summary(df)
 
 # TEST ------------------------------------------------------------------
 
-  # Create's a table for the default country
-  create_epi_tbl("India") %>% 
-   
-  
-  cntry_list <- df %>%
-    distinct(country) %>%
-    pull()
-  
-  # Check'em all!
-  map(cntry_list[1:3], .f = ~ create_epi_tbl(.x) %>% 
-        save_gt(.x, "epi", subtopic = "tbl"))
+  # # Create's a table for the default country
+  # create_epi_tbl("India") 
+  #  
+  # 
+  # cntry_list <- df %>%
+  #   distinct(country) %>%
+  #   pull()
+  # 
+  # # Check'em all!
+  # map(cntry_list[1:3], .f = ~ create_epi_tbl(.x) %>% 
+  #       save_gt(.x, "epi", subtopic = "tbl"))
