@@ -96,7 +96,7 @@
   df_bdgt_tbl <- prep_bdgt_tbl(df_bdgt_trnd)
   
   #test
-  plot_budget_tbl(df_bdgt_tbl, test_cntry, FALSE)
+  plot_budget_tbl(df_bdgt_tbl, test_cntry)
   # plot_budget_tbl(df_bdgt_tbl, test_cntry)
   # si_preview()
   
