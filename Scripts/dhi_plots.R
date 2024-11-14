@@ -103,30 +103,32 @@
     #subititle
     v_subt <- df_cntry %>% 
       filter(funding_agency %in% c("USAID", "PEPFAR")) %>% 
-      mutate(agency_anno = glue("**<span style = 'color:{fill_color};'>{funding_agency}</span>** - Budget: {label_currency(.1, scale_cut = cut_si(''))(estimated_budget)} | Systems: {label_number(1)(n_systems)} | Activities: {label_number(1)(n_activities)}")) %>% 
+      mutate(agency_anno = glue("**<span style = 'color:{fill_color};'>{funding_agency}</span>** - Bdgt: {label_currency(.1, scale_cut = cut_si(''))(estimated_budget)} | Sys: {label_number(1)(n_systems)} | Act: {label_number(1)(n_activities)}")) %>% 
       arrange(funding_agency) %>% 
       pull() %>% 
       paste(collapse = "<br>")
     
     v <- df_cntry %>% 
       filter(funding_agency != "PEPFAR") %>% 
-      ggplot(aes(estimated_budget, country, fill = fill_color)) +
+      mutate(axis_lab = v_subt) %>% 
+      ggplot(aes(estimated_budget, axis_lab, fill = fill_color)) +
       geom_col(na.rm = TRUE) +
       geom_text(aes(label = label_percent()(budget_share)), na.rm = TRUE,
-                family = "Source Sans Pro", hjust = -.3, color = matterhorn) +
+                family = "Source Sans Pro", hjust = -.3, size = 10/.pt,
+                color = matterhorn) +
       scale_fill_identity() +
-      labs(x = NULL, y = NULL,
-           subtitle = v_subt) +
+      labs(x = NULL, y = NULL) +
       si_style_nolines() +
       scale_y_discrete(expand = expansion(mult = 0))+
-      theme(axis.text = element_blank(),
+      theme(axis.text.x = element_blank(),
+            axis.text.y = element_markdown(size = 7),
             plot.subtitle = element_markdown(),
             plot.margin = ggplot2::margin(0, 0, 0, 0, unit = "pt")
             )
     
     
     if(export)
-      save_png(cntry, "dhi", "overview", height = .75, width = 5, scale = 1.05)
+      save_png(cntry, "dhi", "overview", height = .25, width = 5, scale = 1.05)
     
     return(v)
   }
