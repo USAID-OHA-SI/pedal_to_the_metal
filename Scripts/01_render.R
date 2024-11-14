@@ -23,6 +23,7 @@
   library(gt)
   library(fontawesome)
   library(googlesheets4)
+  library(mindthegap)
   
   source("Scripts/save_png.R")
   source("Scripts/save_gt.R")
@@ -30,6 +31,7 @@
   source("Scripts/hrh_plot.R")
   source("Scripts/dhi_plots.R")  
   source("Scripts/10-10-10s.R")
+  source("Scripts/create_epi_control_summary_table.R")
 
 # GLOBAL VARIABLES --------------------------------------------------------
   
@@ -68,6 +70,9 @@
   df_hrh <- read_psd(path_hrh)
   
   df_dhi <- read_psd(path_dhi)
+  
+  #import UNAIDS Data
+  df_unaids  <- load_unaids()
 
 
 # BUDGET SECTION ----------------------------------------------------------
@@ -217,5 +222,36 @@
   #iterate
   walk(v_countries,
        ~dotplot_viz_10s(df_tens_viz, .x))
+  
+  #check
+  list.files("Images", "kp-policy") %>% 
+    str_sub(end = 3) %>% 
+    setdiff(v_iso)
+  
+  remove()
+
+# EPI SUMMARY TABLE -------------------------------------------------------
+
+  #Create data
+  # Can use df_unaids, but need appropriate filters
+  df_epi <- load_and_filter_data() #calls load_unaids() within
+  df_epi_stats <- prepare_epi_stats(df_epi)
+  df_epi_cntrl <- prepare_epi_control(df_epi)
+  df_95s <- prepare_95s_summary(df_epi)
+
+  #Test
+  create_epi_tbl("Mozambique") 
+  
+  #iterate
+  walk(v_countries[24], .f = ~ create_epi_tbl(.x) %>% 
+              save_gt(.x, "epi", subtopic = "tbl"))  
+  
+  #check
+  list.files("Images", "epi-tbl") %>% 
+    str_sub(end = 3) %>% 
+    setdiff(v_iso)
+  
+  ## CLEAR BUDGET DATA ----
+  rm(df_95s, df_epi, df_epi_cntrl, df_epi_stats)
   
   
