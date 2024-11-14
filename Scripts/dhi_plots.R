@@ -233,7 +233,7 @@
   # 
     
     
-    make_dhi_cat_table <- function(df, cntry){
+    make_dhi_cat_table <- function(df, cntry, export = TRUE){
       
       custom_palette <- colorRampPalette(c(si_palettes$viking_t[1], si_palettes$viking_t[5]))(20)
       
@@ -289,8 +289,9 @@
           ) %>% 
         compress_rows(font_size = 14) 
       
+      if(export)
+        save_gt(cntry, "dhi", "cat-tbl")
+      
       }
-    
-    make_dhi_cat_table(df_sys_cat, "Zambia") 
 
     
