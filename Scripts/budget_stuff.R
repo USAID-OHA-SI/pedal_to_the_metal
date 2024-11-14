@@ -155,8 +155,8 @@
         locations = cells_body(columns = direction),
         fn = function(x) {
           case_when(
-            x == "increase" ~ fa("chevron-up", fill = si_palettes$hunter_t[3]) %>% as.character,
-            x == "decrease" ~ fa("chevron-down", fill = orchid_bloom) %>% as.character,
+            x == "increase" ~ fa("chevron-up", fill = viking) %>% as.character,
+            x == "decrease" ~ fa("chevron-down", fill = si_palettes$orchid_bloom_t[3]) %>% as.character,
             x == "flat"     ~ fa("chevron-right", fill = grey20k) %>% as.character
           )
         }
