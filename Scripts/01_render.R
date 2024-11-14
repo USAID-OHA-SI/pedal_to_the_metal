@@ -4,7 +4,7 @@
 # REF ID:   7cf8b162 
 # LICENSE:  MIT
 # DATE:     2024-11-12
-# UPDATED: 
+# UPDATED:  2024-11-14
 
 # DEPENDENCIES ------------------------------------------------------------
   
@@ -181,15 +181,21 @@
   df_sys_cat <- prep_dhi_cat(df_dhi)
   
   #test
-  plot_dhi_cat(df_sys_cat, test_cntry)
-  si_preview()
+  # plot_dhi_cat(df_sys_cat, test_cntry)
+  # si_preview()
+  make_dhi_cat_table(df_sys_cat, test_cntry) 
   
   #iterate
+  # walk(v_countries,
+  #     ~plot_dhi_cat(df_sys_cat, .x))
   walk(v_countries,
-      ~plot_dhi_cat(df_sys_cat, .x))
+      ~make_dhi_cat_table(df_sys_cat, .x))
 
   #check
-  list.files("Images", "dhi-cat") %>% 
+  # list.files("Images", "dhi-cat") %>% 
+  #   str_sub(end = 3) %>% 
+  #   setdiff(v_iso)
+  list.files("Images", "dhi-cat-tbl") %>% 
     str_sub(end = 3) %>% 
     setdiff(v_iso)
   
