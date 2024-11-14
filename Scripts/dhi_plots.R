@@ -59,7 +59,6 @@
     df_sys <- df %>% 
       bind_rows(df %>% 
                   mutate(funding_agency = "PEPFAR")) %>% 
-      rename(fiscal_year = dhi_submission_fiscal_year) %>% 
       clean_agency() %>% 
       filter(fiscal_year == max(fiscal_year),
              dhi_question_code == "estimated_budget") %>% 
@@ -86,7 +85,7 @@
       ungroup()
     
     df_sys <- df_sys %>%
-      mutate(fill_color = ifelse(funding_agency == "USAID", si_palettes$hunter_t[1], "gray80"),
+      mutate(fill_color = ifelse(funding_agency == "USAID", si_palettes$hunter_t[1], slate),
              funding_agency = fct_relevel(funding_agency, "USAID") %>% fct_rev(),
              fill_color = fct_rev(fill_color))
     
@@ -104,30 +103,32 @@
     #subititle
     v_subt <- df_cntry %>% 
       filter(funding_agency %in% c("USAID", "PEPFAR")) %>% 
-      mutate(agency_anno = glue("**<span style = 'color:{fill_color};'>{funding_agency}</span>** - Budget: {label_currency(.1, scale_cut = cut_si(''))(estimated_budget)} | Systems: {label_number(1)(n_systems)} | Activities: {label_number(1)(n_activities)}")) %>% 
+      mutate(agency_anno = glue("**<span style = 'color:{fill_color};'>{funding_agency}</span>** - Bdgt: {label_currency(.1, scale_cut = cut_si(''))(estimated_budget)} | Sys: {label_number(1)(n_systems)} | Act: {label_number(1)(n_activities)}")) %>% 
       arrange(funding_agency) %>% 
       pull() %>% 
       paste(collapse = "<br>")
     
     v <- df_cntry %>% 
       filter(funding_agency != "PEPFAR") %>% 
-      ggplot(aes(estimated_budget, country, fill = fill_color)) +
+      mutate(axis_lab = v_subt) %>% 
+      ggplot(aes(estimated_budget, axis_lab, fill = fill_color)) +
       geom_col(na.rm = TRUE) +
       geom_text(aes(label = label_percent()(budget_share)), na.rm = TRUE,
-                family = "Source Sans Pro", hjust = -.3, color = matterhorn) +
+                family = "Source Sans Pro", hjust = -.3, size = 10/.pt,
+                color = matterhorn) +
       scale_fill_identity() +
-      labs(x = NULL, y = NULL,
-           subtitle = v_subt) +
+      labs(x = NULL, y = NULL) +
       si_style_nolines() +
       scale_y_discrete(expand = expansion(mult = 0))+
-      theme(axis.text = element_blank(),
+      theme(axis.text.x = element_blank(),
+            axis.text.y = element_markdown(size = 7),
             plot.subtitle = element_markdown(),
             plot.margin = ggplot2::margin(0, 0, 0, 0, unit = "pt")
             )
     
     
     if(export)
-      save_png(cntry, "dhi", "overview", height = .75, width = 5, scale = 1.05)
+      save_png(cntry, "dhi", "overview", height = .25, width = 5, scale = 1.05)
     
     return(v)
   }
@@ -146,7 +147,6 @@
   prep_dhi_cat <- function(df){
     
     df_sys_cat <- df %>% 
-      rename(fiscal_year = dhi_submission_fiscal_year) %>% 
       clean_agency() %>% 
       filter(fiscal_year == max(fiscal_year),
              dhi_question_code == "estimated_budget") %>% 
@@ -163,7 +163,7 @@
       mutate(share = estimated_budget /sum(estimated_budget)) %>% 
       ungroup() %>% 
       filter(funding_agency %in% c("USAID", "CDC")) %>% 
-      mutate(fill_color = ifelse(funding_agency == "USAID", si_palettes$hunter_t[1], "gray80"))
+      mutate(fill_color = ifelse(funding_agency == "USAID", si_palettes$hunter_t[1], slate))
     
     
     #expand grid to avoid empty plots
@@ -184,13 +184,12 @@
       df_cntry <- df %>% 
         filter(country == cntry) %>% 
         mutate(primary_system_category = fct_reorder(primary_system_category, estimated_budget, sum),
-               primary_system_category = fct_relevel(primary_system_category, "Other", after = 0)) %>% 
-        filter(estimated_budget > 0)
+               primary_system_category = fct_relevel(primary_system_category, "Other", after = 0))
       
-      #ensure USAID and CDC have lines
-      df_cntry <- df_cntry %>% 
-        full_join(expand_grid(funding_agency = c("USAID", "CDC")),
-                   by = join_by(funding_agency))
+      # #ensure USAID and CDC have lines
+      # df_cntry <- df_cntry %>% 
+      #   full_join(expand_grid(funding_agency = c("USAID", "CDC")),
+      #              by = join_by(funding_agency))
         
       v <-  df_cntry %>% 
         ggplot(aes(share, funding_agency, fill = fill_color)) +
@@ -240,15 +239,14 @@
       df_cntry <- df %>% 
         filter(country == cntry) %>% 
         mutate(primary_system_category = fct_reorder(primary_system_category, estimated_budget, sum),
-               primary_system_category = fct_relevel(primary_system_category, "Other", after = 0)) %>% 
-        filter(estimated_budget > 0)
+               primary_system_category = fct_relevel(primary_system_category, "Other", after = 0)) 
       
       #ensure USAID and CDC have lines
-      df_cntry <- df_cntry %>% 
-        full_join(expand_grid(funding_agency = c("USAID", "CDC")),
-                  by = join_by(funding_agency))  
+      # df_cntry <- df_cntry %>%
+      #   full_join(expand_grid(funding_agency = c("USAID", "CDC")),
+      #             by = join_by(funding_agency))
       
-      df_cntry %>% 
+      t <- df_cntry %>% 
         select(country, funding_agency, primary_system_category, share) %>% 
         pivot_wider(names_from = primary_system_category,
                     values_from = share) %>% 
@@ -290,7 +288,9 @@
         compress_rows(font_size = 14) 
       
       if(export)
-        save_gt(cntry, "dhi", "cat-tbl")
+        save_gt(t, cntry, "dhi", "cat-tbl")
+      
+      return(t)
       
       }
 

@@ -102,7 +102,7 @@
   
   #iterate
   walk(v_countries,
-      ~plot_budget_tbl(df_bdgt_trend_tbl, .x))
+      ~plot_budget_tbl(df_bdgt_tbl, .x))
   
   
   ## LOCAL PARTNER SHARE -----
