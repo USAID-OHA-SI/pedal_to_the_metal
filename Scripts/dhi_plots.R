@@ -59,7 +59,6 @@
     df_sys <- df %>% 
       bind_rows(df %>% 
                   mutate(funding_agency = "PEPFAR")) %>% 
-      rename(fiscal_year = dhi_submission_fiscal_year) %>% 
       clean_agency() %>% 
       filter(fiscal_year == max(fiscal_year),
              dhi_question_code == "estimated_budget") %>% 
@@ -146,7 +145,6 @@
   prep_dhi_cat <- function(df){
     
     df_sys_cat <- df %>% 
-      rename(fiscal_year = dhi_submission_fiscal_year) %>% 
       clean_agency() %>% 
       filter(fiscal_year == max(fiscal_year),
              dhi_question_code == "estimated_budget") %>% 
