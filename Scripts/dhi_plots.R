@@ -291,6 +291,6 @@
       
       }
     
-    make_dhi_cat_table(df_sys_cat, "Zambia") 
+    # make_dhi_cat_table(df_sys_cat, "Zambia") 
 
     
