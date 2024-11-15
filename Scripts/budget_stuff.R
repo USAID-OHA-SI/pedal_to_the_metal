@@ -71,17 +71,17 @@
     
     v <- df_cntry %>% 
       ggplot(aes(fiscal_year, cop_budget_total, fill = funding_agency)) +
-      geom_col(position = "identity", width = 0.5) +
+      geom_col(position = "identity", width = 0.75) +
       geom_errorbar(aes(ymin = cop_budget_total, ymax = cop_budget_total), 
-                    linewidth = 0.5, width = 0.5, colour = grey50k, position = "identity") +
-      geom_text(aes(label = pt_label), na.rm = TRUE, color = si_palettes$hunter_t[1],
-                family = "Source Sans Pro", vjust = -.4, size = 12/.pt) +
+                    linewidth = 0.5, width = 0.75, colour = grey50k, position = "identity") +
+      geom_text(aes(label = pt_label), na.rm = TRUE, color = "white",
+                family = "Source Sans Pro", fontface = "bold", vjust = 1.2, size = 11/.pt) +
       scale_y_continuous(label = label_currency(scale = 1e-6, suffix = "m")) +
       scale_fill_manual(values = c("PEPFAR" = grey20k,
                                    "USAID" = si_palettes$hunter_t[1])) +
       
-      labs(x = NULL, y = NULL,
-           title = glue("<span style = 'color:{si_palettes$hunter_t[1]};'>USAID'S</span> SHARE OF THE TOTAL PEPFAR BUDGET")) +
+      labs(x = NULL, y = NULL) +
+           # title = glue("<span style = 'color:{si_palettes$hunter_t[1]};'>USAID'S</span> SHARE OF THE TOTAL PEPFAR BUDGET")) +
       si_style_ygrid() +
       theme(axis.text.y = element_blank(),
             legend.position ="none",
@@ -90,7 +90,7 @@
       )
     
     if(export)
-      save_png(cntry, "budget", "trend", scale = 0.5)
+      save_png(cntry, "budget", "trend", scale = 1.25, width = 2.5, height = 1.6)
     
     return(v)
   }
@@ -252,7 +252,7 @@
                                    "TBD" = si_palettes$hunter_t[5] #grey30k
                                    )) +
       geom_text(aes(label = pt_label), na.rm = TRUE, color = si_palettes$hunter_t[1],
-                family = "Source Sans Pro", fontface = "bold", hjust = -.2, size = 13/.pt) +
+                family = "Source Sans Pro", fontface = "bold", hjust = -.2, size = 14/.pt) +
       labs(x = NULL, y = NULL,
            # title = glue("USAID BUDGET TO <span style = 'color:{si_palettes$hunter_t[1]};'>LOCAL PARTNERS</span>"),
            subtitle = glue("FY{str_sub(df_cntry$fiscal_year, -2)} Budget [{tbd_share} classified as 'TBD']")) +
