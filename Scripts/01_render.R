@@ -299,8 +299,25 @@
  
   
   # Create Image paths inside table dataframe for Images1:N
-  tbl_list <-  list("epi-tbl", "epi-gaps", "kp-policy","budget-trend", "budget-tbl", 
-       "budget-lp-share", "hrh", "dhi-overview", "dhi-cat-tbl")
+  # Preserve order in which they appear on page in AI
+  tbl_list <- list("epi-tbl", "epi-gaps", "kp-policy", "program",
+                   "budget-tbl", "budget-trend", "budget-lp-share", 
+                   "hrh", "dhi-cat-tbl", "dhi-overview")
+  
+  
+  df_final <- reduce(
+    seq_along(tbl_list),
+    .init = df_final,
+    .f = function(df, i) {
+      column_name <- glue("@image{i}")
+      df %>% mutate(!!column_name := glue("{country_iso}_{tbl_list[[i]]}.png"))
+    }
+  )
+
+write_csv(df_final, "Images/hiv_data_briefer_table.csv", na = "-")  
+
+  
+  
   
   
 
