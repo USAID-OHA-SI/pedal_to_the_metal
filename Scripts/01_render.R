@@ -80,11 +80,6 @@
   
 # Ordering based on order they appear in document
   
-
-
-  
-  
-
 # EPI SUMMARY TABLE -------------------------------------------------------
   
   #Create data
@@ -100,7 +95,7 @@
   create_epi_tbl(test_cntry) 
   
   #iterate
-  walk(v_countries[24], .f = ~ create_epi_tbl(.x) %>% 
+  walk(v_countries, .f = ~ create_epi_tbl(.x) %>% 
          save_gt(.x, "epi", subtopic = "tbl"))  
   
   #check
@@ -160,20 +155,7 @@
 
 # BUDGET SECTION ----------------------------------------------------------
 
-  ## BUDGET TABLE -----
-  
-  #munge data
-  df_bdgt_tbl <- prep_bdgt_tbl(df_bdgt_trnd)
-  
-  #test
-  plot_budget_tbl(df_bdgt_tbl, test_cntry)
-  # plot_budget_tbl(df_bdgt_tbl, test_cntry)
-  # si_preview()
-  
-  #iterate
-  walk(v_countries,
-       ~plot_budget_tbl(df_bdgt_tbl, .x))
-  
+
   ## BUDGET TREND BAR CHART -----
   
   #munge data
@@ -191,6 +173,20 @@
   list.files("Images", "budget-trend") %>% 
     str_sub(end = 3) %>% 
     setdiff(v_iso)
+  
+  ## BUDGET TABLE -----
+  
+  #munge data
+  df_bdgt_tbl <- prep_bdgt_tbl(df_bdgt_trnd)
+  
+  #test
+  plot_budget_tbl(df_bdgt_tbl, test_cntry)
+  # plot_budget_tbl(df_bdgt_tbl, test_cntry)
+  # si_preview()
+  
+  #iterate
+  walk(v_countries,
+       ~plot_budget_tbl(df_bdgt_tbl, .x))
   
   ## LOCAL PARTNER SHARE -----
   
@@ -295,9 +291,17 @@
 # TABLE SUMARY ----------------------------------------------------------------
   
   # Source Creation of dynamic text
-  source("Create_main_text_table.R") 
+  source("Scripts/Create_main_text_table.R") 
+  
+ df_final <-  df_final %>% 
+    mutate(age_dep_d = str_remove_all(age_dep_d, " Burden"),
+            nurses_d = str_remove_all(nurses_d, " Adequate"))
+ 
   
   # Create Image paths inside table dataframe for Images1:N
+  tbl_list <-  list("epi-tbl", "epi-gaps", "kp-policy","budget-trend", "budget-tbl", 
+       "budget-lp-share", "hrh", "dhi-overview", "dhi-cat-tbl")
+  
   
 
 
