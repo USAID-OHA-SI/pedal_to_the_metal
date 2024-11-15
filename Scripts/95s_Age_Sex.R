@@ -41,19 +41,20 @@
       dplyr::filter(indicator_type == "Percent", 
                     year == 2023)
     
-    #Define the required combinations of indicator, age, and sex
-    required_combinations <- expand_grid(
-      country = pepfar_country_list$country,
-      indicator = c("Percent Known Status of PLHIV", 
-                    "Percent on ART with Known Status",
-                    "Percent VLS on ART"),
-      age_sex = c("0-14_All", "15+_Male", "15+_Female")
-    ) %>% 
-      separate_wider_delim(age_sex, names = c("age", "sex"), delim = "_") 
 
 # MUNGE ============================================================================
   
     prep_tt_tbl <- function(df) {
+      
+      #Define the required combinations of indicator, age, and sex
+      required_combinations <- expand_grid(
+        country = glamr::pepfar_country_list$country,
+        indicator = c("Percent Known Status of PLHIV", 
+                      "Percent on ART with Known Status",
+                      "Percent VLS on ART"),
+        age_sex = c("0-14_All", "15+_Male", "15+_Female")
+      ) %>% 
+        separate_wider_delim(age_sex, names = c("age", "sex"), delim = "_") 
       
       #Limit the data
     df_rel_lim <- df %>% 
@@ -73,7 +74,7 @@
       filter(!(sex == "All" & age == "15+"),
              !(age == "0-14" & sex %in% c("Male", "Female"))
       ) %>% 
-      mutate(stroke_color = ifelse(flag == FALSE, glitr::hw_orchid_bloom, glitr::hw_hunter),
+      mutate(stroke_color = ifelse(flag == FALSE, glitr::si_palettes$orchid_bloom_t[2], glitr::viking),
             sex = str_sub(sex, end = 1),
              age_sex = glue("{age} {sex}"),
              age_sex = str_remove(age_sex, " A"),
