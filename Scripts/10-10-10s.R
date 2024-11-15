@@ -215,7 +215,7 @@
             ggplot2::scale_x_discrete(, position = "top") +
             ggplot2::scale_y_discrete(position = "right") +
             ggplot2::labs(x = "Status", y = NULL,
-                          title = "GAPS IN THE 10-10-10 GOALS",
+                          # title = "GAPS IN THE 10-10-10 GOALS",
                           subtitle = glue::glue("<span style = 'font-weight: bold; color:#f47d35'>Not Adopted </span> |
                                  <span style = 'font-weight: bold;color:#f6af15'>Partially </span> |
                                                 <span style = 'font-weight: bold;color:#2e92b5'>Adopted</span>")) +
