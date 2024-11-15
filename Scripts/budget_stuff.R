@@ -243,17 +243,18 @@
     tbd_share <- label_percent(1)(df_cntry[df_cntry$local_prime_partner == "TBD",]$share)
     
     v <- df_cntry %>% 
+      mutate(local_prime_partner = fct_relevel(local_prime_partner, c("TBD", "International", "Local"))) %>% 
       ggplot(aes(cop_budget_total, country, fill = local_prime_partner)) +
       geom_col(width = 0.05) +
       scale_fill_manual(values = c("Local" = si_palettes$hunter_t[1], 
-                                   "International" = si_palettes$hunter_t[5], #grey20k, 
+                                   "International" = si_palettes$hunter_t[4], #grey20k, 
                                    # "Unknown" = si_palettes$hunter_t[5], #grey30k
                                    "TBD" = si_palettes$hunter_t[5] #grey30k
                                    )) +
       geom_text(aes(label = pt_label), na.rm = TRUE, color = si_palettes$hunter_t[1],
-                family = "Source Sans Pro", hjust = -.25, size = 11/.pt) +
+                family = "Source Sans Pro", fontface = "bold", hjust = -.2, size = 13/.pt) +
       labs(x = NULL, y = NULL,
-           title = glue("USAID BUDGET TO <span style = 'color:{si_palettes$hunter_t[1]};'>LOCAL PARTNERS</span>"),
+           # title = glue("USAID BUDGET TO <span style = 'color:{si_palettes$hunter_t[1]};'>LOCAL PARTNERS</span>"),
            subtitle = glue("FY{str_sub(df_cntry$fiscal_year, -2)} Budget [{tbd_share} classified as 'TBD']")) +
            #caption = "Note: Includes SCH") +
       si_style_nolines() +
