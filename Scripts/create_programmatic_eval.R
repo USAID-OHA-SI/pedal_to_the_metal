@@ -40,8 +40,9 @@ cop_ous <- glamr::pepfar_country_list %>%
   filter(str_detect(operatingunit, "Region", negate = T)) %>% 
   pull(operatingunit)
 
-df_orig <- df %>%
+df_filtered <- df %>%
   filter(country %in% cop_ous)
+
 
 # MUNGE -------------------------------------------------------------------
 
@@ -229,12 +230,13 @@ run_achievement_analysis <- function(df, cntry, meta, jitter_factor) {
 
 
 # Example usage:
-plot <- run_achievement_analysis(df, cntry, meta, .05)
+plot <- run_achievement_analysis(df_filtered, cntry, meta, .05)
 print(plot)
 
 
 ################## TO DO #################################################
 # Fix any labeling (i.e. OVC_SERV_UNDER_18)
+# Formatting to explain some are true percentages and some are target achievement
 # What to do about TX_NET_NEW?
 # Cut Top 80%?
 # Adjust x scales?
