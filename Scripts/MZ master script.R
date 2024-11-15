@@ -1,32 +1,43 @@
+# PROJECT:  pedal_to_the_metal
+# PURPOSE:  Create text for dynamic text links
+# AUTHOR:   M. Zendt | T.Essam USAID
+# REF ID:   7cf8b162 
+# LICENSE:  MIT
+# DATE:     2024-11-12
+# UPDATED:  2024-11-15
 
-#remotes::install_github("USAID-OHA-SI/mindthegap", ref = "dev_edms_plot")
-library(mindthegap)
-library(googlesheets4)
-library(tidyverse)
-library(glue)
-library(gagglr)
+# DEPENDENCIES ------------------------------------------------------------
 
-load_secrets()
+  #remotes::install_github("USAID-OHA-SI/mindthegap", ref = "dev_edms_plot")
+  # library(mindthegap)
+  # library(googlesheets4)
+  # library(tidyverse)
+  # library(glue)
+  # library(gagglr)
+
+# load_secrets()
+
+
 # Functions and datasets ------------
-clean_number <- function(x, digits = 0){
-  dplyr::case_when(x >= 1e9 ~ glue("{round(x/1e9, digits)}b"),
-                   x >= 1e6 ~ glue("{round(x/1e6, digits)}m"),
-                   x >= 1e3 ~ glue("{round(x/1e3, digits)}k"),
-                   TRUE ~ glue("{x}"))
-}
+  clean_number <- function(x, digits = 0){
+    dplyr::case_when(x >= 1e9 ~ glue("{round(x/1e9, digits)}b"),
+                     x >= 1e6 ~ glue("{round(x/1e6, digits)}m"),
+                     x >= 1e3 ~ glue("{round(x/1e3, digits)}k"),
+                     TRUE ~ glue("{x}"))
+  }
 
 
-pepfar <- pepfar_country_list
-pepfar_short <- pepfar %>%
-  select(operatingunit_iso, country, country_iso)
-
-cop_ous <- glamr::pepfar_country_list %>% 
-  filter(str_detect(operatingunit, "Region", negate = T)) %>% 
-  pull(operatingunit)
-
-cop_ou_iso <- pepfar_short 
-
-options(scipen = 999)
+  pepfar <- pepfar_country_list
+  pepfar_short <- pepfar %>%
+    select(operatingunit_iso, country, country_iso)
+  
+  cop_ous <- glamr::pepfar_country_list %>% 
+    filter(str_detect(operatingunit, "Region", negate = T)) %>% 
+    pull(operatingunit)
+  
+  cop_ou_iso <- pepfar_short 
+  
+  options(scipen = 999)
 
 
 ## 1. general financial dataset ----------
@@ -374,6 +385,11 @@ global_1 <- global %>%
 
   df <- df %>%
     select(country, country_iso, everything())
+  
+
+# CLEAN COUNTRY NAMES -----------------------------------------------------
+
+  # Need DRC inste  
   
 
 # WRITE CSV with "-" for NAs ----------------------------------------------

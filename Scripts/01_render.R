@@ -1,6 +1,6 @@
 # PROJECT:  pedal_to_the_metal
 # PURPOSE:  render plots
-# AUTHOR:   A.Chafetz | USAID
+# AUTHOR:   A.Chafetz | T.Essam USAID
 # REF ID:   7cf8b162 
 # LICENSE:  MIT
 # DATE:     2024-11-12
@@ -34,6 +34,8 @@
   source("Scripts/create_epi_control_summary_table.R")
   source("Scripts/95s_Age_Sex.R")
 
+  load_secrets()
+
 # GLOBAL VARIABLES --------------------------------------------------------
   
   #reference id
@@ -59,7 +61,7 @@
     pull(country_iso)
   
   #country to test for plots
-  test_cntry <- "Malawi"
+  test_cntry <- "Zambia"
   
 # IMPORT ------------------------------------------------------------------
   
@@ -73,11 +75,102 @@
   df_dhi <- read_psd(path_dhi)
   
   #import UNAIDS Data
-  df_unaids  <- load_unaids()
+  df_unaids  <- load_unaids(pepfar_only = TRUE)
 
+  
+# Ordering based on order they appear in document
+  
+  # Source Creation of dynamic text
+  
+  
+
+# EPI SUMMARY TABLE -------------------------------------------------------
+  
+  #Create data
+  #Can use df_unaids, but need appropriate filters
+  df_epi <- load_and_filter_data() #calls load_unaids() within
+  df_epi_stats <- prepare_epi_stats(df_epi)
+  df_epi_cntrl <- prepare_epi_control(df_epi)
+  df_95s <- prepare_95s_summary(df_epi)
+  
+  #Test
+  create_epi_tbl(test_cntry) 
+  
+  #iterate
+  walk(v_countries[24], .f = ~ create_epi_tbl(.x) %>% 
+         save_gt(.x, "epi", subtopic = "tbl"))  
+  
+  #check
+  list.files("Images", "epi-tbl") %>% 
+    str_sub(end = 3) %>% 
+    setdiff(v_iso)
+  
+  ## CLEAR UNAIDS DATA ----
+  rm(df_95s, df_epi, df_epi_cntrl, df_epi_stats)
+  
+# EPI GAP LOLLIPOPS -------------------------------------------------------
+  
+  df_tt <- df_unaids %>% 
+    dplyr::filter(indicator_type == "Percent", 
+                  year == 2023)
+  
+  #Create data
+  df_epi_gaps <- prep_tt_tbl(df_tt)
+  
+  #Test
+  plot_epi_gaps(df_epi_gaps, "Zambia")
+  si_preview()
+  
+  #iterate
+  walk(v_countries, .f = ~ plot_epi_gaps(df_epi_gaps, .x))  
+  
+  #check
+  list.files("Images", "epi-gaps") %>% 
+    str_sub(end = 3) %>% 
+    setdiff(v_iso)
+  
+  ## CLEAR EPI GAPS DATA ----
+  rm(df_epi_gaps, df_tt)
+  
+    
+# 10s Plots ---------------------------------------------------------------
+  
+  # Chunks for loading and working with 10s
+  df_tens <- load_tens()
+  
+  df_tens_viz <- prep_10s_barriers(df_tens)
+  dotplot_viz_10s(df_tens_viz, "Zambia")
+  
+  #iterate
+  walk(v_countries,
+       ~dotplot_viz_10s(df_tens_viz, .x))
+  
+  #check
+  list.files("Images", "kp-policy") %>% 
+    str_sub(end = 3) %>% 
+    setdiff(v_iso)
+  
+  ## CLEAR 10s data ----
+  remove(df_tens, df_tens_viz)  
+  
+  
 
 # BUDGET SECTION ----------------------------------------------------------
 
+  ## BUDGET TABLE -----
+  
+  #munge data
+  df_bdgt_tbl <- prep_bdgt_tbl(df_bdgt_trnd)
+  
+  #test
+  plot_budget_tbl(df_bdgt_tbl, test_cntry)
+  # plot_budget_tbl(df_bdgt_tbl, test_cntry)
+  # si_preview()
+  
+  #iterate
+  walk(v_countries,
+       ~plot_budget_tbl(df_bdgt_tbl, .x))
+  
   ## BUDGET TREND BAR CHART -----
   
   #munge data
@@ -95,21 +188,6 @@
   list.files("Images", "budget-trend") %>% 
     str_sub(end = 3) %>% 
     setdiff(v_iso)
-  
-  ## BUDGET TABLE -----
-  
-  #munge data
-  df_bdgt_tbl <- prep_bdgt_tbl(df_bdgt_trnd)
-  
-  #test
-  plot_budget_tbl(df_bdgt_tbl, test_cntry)
-  # plot_budget_tbl(df_bdgt_tbl, test_cntry)
-  # si_preview()
-  
-  #iterate
-  walk(v_countries,
-      ~plot_budget_tbl(df_bdgt_tbl, .x))
-  
   
   ## LOCAL PARTNER SHARE -----
   
@@ -144,7 +222,7 @@
   
   #test
   plot_hrh(df_hrh_plot, test_cntry)
-  si_preview()
+   si_preview()
   
   #iterate
   walk(v_countries,
@@ -160,7 +238,6 @@
   rm(df_hrh_plot)
   si_clear_preview()
   
-  
 
 # DHI SECTION -------------------------------------------------------------
 
@@ -174,7 +251,7 @@
   si_preview()
   
   #iterate
-  walk(v_countries[20],
+  walk(v_countries,
       ~plot_dhi_overview(df_sys, .x))
   
   #check
@@ -183,7 +260,7 @@
     setdiff(v_iso)
   
   
-  ## DHI Categorical Plot -----
+  ## DHI Categorical Table -----
   
   #munge
   df_sys_cat <- prep_dhi_cat(df_dhi)
@@ -212,70 +289,9 @@
   si_clear_preview()
   
 
-# 10s Plots ---------------------------------------------------------------
 
-  # Chunks for loading and working with 10s
-  df_tens <- load_tens()
-  
-  df_tens_viz <- prep_10s_barriers(df_tens)
-  dotplot_viz_10s(df_tens_viz, "Zambia")
-  
-  #iterate
-  walk(v_countries,
-       ~dotplot_viz_10s(df_tens_viz, .x))
-  
-  #check
-  list.files("Images", "kp-policy") %>% 
-    str_sub(end = 3) %>% 
-    setdiff(v_iso)
-  
-  ## CLEAR 10s data ----
-  remove(df_tens, df_tens_viz)
 
-# EPI SUMMARY TABLE -------------------------------------------------------
 
-  #Create data
-  #Can use df_unaids, but need appropriate filters
-  df_epi <- load_and_filter_data() #calls load_unaids() within
-  df_epi_stats <- prepare_epi_stats(df_epi)
-  df_epi_cntrl <- prepare_epi_control(df_epi)
-  df_95s <- prepare_95s_summary(df_epi)
 
-  #Test
-  create_epi_tbl(test_cntry) 
-  
-  #iterate
-  walk(v_countries[24], .f = ~ create_epi_tbl(.x) %>% 
-              save_gt(.x, "epi", subtopic = "tbl"))  
-  
-  #check
-  list.files("Images", "epi-tbl") %>% 
-    str_sub(end = 3) %>% 
-    setdiff(v_iso)
-  
-## CLEAR UNAIDS DATA ----
-  rm(df_95s, df_epi, df_epi_cntrl, df_epi_stats)
-  
-# EPI GAP LOLLIPOPS -------------------------------------------------------
-
-  #Create data
-  df_epi_gaps <- prep_tt_tbl(df_tt)
-  
-  #Test
-  plot_epi_gaps(df_epi_gaps, "Zambia")
-  si_preview()
-  
-  #iterate
-  walk(v_countries, .f = ~ plot_epi_gaps(df_epi_gaps, .x))  
-  
-  #check
-  list.files("Images", "epi-gaps") %>% 
-    str_sub(end = 3) %>% 
-    setdiff(v_iso)
-  
-  ## CLEAR EPI GAPS DATA ----
-  rm(df_epi_gaps, df_tt)
-  
-# 
   
   

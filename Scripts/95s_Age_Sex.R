@@ -37,9 +37,9 @@
 
 # LOAD DATA ============================================================================  
 
-    df_tt <- mindthegap::load_unaids(pepfar_only = T) %>% 
-      dplyr::filter(indicator_type == "Percent", 
-                    year == 2023)
+    # df_tt <- mindthegap::load_unaids(pepfar_only = T) %>% 
+    #   dplyr::filter(indicator_type == "Percent", 
+    #                 year == 2023)
     
 
 # MUNGE ============================================================================
