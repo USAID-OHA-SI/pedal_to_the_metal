@@ -50,8 +50,7 @@ process_achievement_data <- function(df, cntry, meta) {
   df %>%
     filter(country == cntry,
            indicator %in% c("TX_CURR", "TX_PVLS", "TX_PVLS_D", 
-                            "PMTCT_EID", "OVC_SERV_UNDER_18", "AGYW_PREV",
-                            "PrEP_NEW", "TX_NET_NEW", "TX_ML_IIT_less_three_mo",
+                            "PMTCT_EID", "PrEP_NEW", "TX_ML_IIT_less_three_mo",
                             "TX_ML_IIT_six_more_mo", "TX_ML_IIT_three_five_mo")) %>%
     mutate(type = case_when(
       sex == "Female" & ageasentered %in% c("10-14","15-19", "20-24")  ~ "AGYW",
@@ -63,7 +62,7 @@ process_achievement_data <- function(df, cntry, meta) {
     summarise(across(c(targets, cumulative), ~ sum(.x, na.rm = TRUE)),
               .groups = "drop") %>%
     #Filter out rows where specific indicators have targets == 0
-    filter(!(indicator %in% c("AGYW_PREV", "OVC_SERV_UNDER_18", "PMTCT_EID", "PrEP_NEW") & targets == 0)) %>%
+    filter(!(indicator %in% c("PMTCT_EID", "PrEP_NEW") & (targets == 0 | is.na(targets)))) %>%
     gophr::clean_agency() %>%
     gophr::adorn_achievement(qtr = meta$curr_qtr) %>%
     filter(!is.na(type))
@@ -144,20 +143,18 @@ custom_jitter <- function(df, jitter_factor = 0.05) {
 }
 
 # Function to process and visualize achievement data for a specific country
-process_achievement_viz <- function(df_combined, cntry, jitter_factor) {
+process_achievement_viz <- function(df_combined, cntry) {
   df_achv_viz <- df_combined %>%
     filter(country == cntry) %>%
-    filter(indicator %in% c("vlc", "vls", "PrEP_NEW", "OVC_SERV_UNDER_18", "AGYW_PREV", "TX_NET_NEW", "PMTCT_EID", "iit")) %>%
-    filter(!(indicator %in% c('OVC_SERV_UNDER_18', "AGYW_PREV") & type != "Total"))%>% # Only report OVC and AGYW as Total
+    filter(indicator %in% c("vlc", "vls", "PrEP_NEW", "PMTCT_EID", "iit")) %>%
     mutate(type = factor(type, levels = c("Total", "KeyPop", "Peds", "AGYW", "Males (15+)")),
-           indicator = factor(indicator, levels = c("vlc", "vls", "PrEP_NEW", "TX_NET_NEW", "iit", "PMTCT_EID", "OVC_SERV_UNDER_18", "AGYW_PREV"))) %>%
-    custom_jitter(jitter_factor) %>%  # Apply the custom jitter function
+    indicator = factor(indicator, levels = c("vlc", "vls", "PrEP_NEW", "iit", "PMTCT_EID"))) %>%
     
     
     return(df_achv_viz)
 }
 
-generate_plot <- function(df_achv_viz, meta, cntry) {
+generate_plot <- function(df_achv_viz, meta, cntry, jitter_factor) {
   # Baseline point for line with ticks
   baseline_pt_1 <- 0
   baseline_pt_2 <- .25
@@ -167,17 +164,16 @@ generate_plot <- function(df_achv_viz, meta, cntry) {
   
   df_achv_viz %>%
     # Adjust df for plot
+    custom_jitter(jitter_factor) %>%
     mutate(
-      funding_agency = recode(funding_agency, "DEFAULT" = "PEPFAR"), # Display DEFAULT (i.e. No Agency) as PEPFAR
-      funding_agency = factor(funding_agency, levels = c("USAID", "CDC", "PEPFAR")),
-      indicator = recode(indicator, "vls" = "VLS", "vlc" = "VLC", "iit" = "IIT", "OVC_SERV_UNDER_18" = "OVC_SERV (<18)") # For display purposes
+      funding_agency = factor(funding_agency, levels = c("USAID", "CDC")),
+      indicator = recode(indicator, "vls" = "VLS", "vlc" = "VLC", "iit" = "IIT") # For display purposes
     ) %>%
     # Plot setup
     ggplot(aes(achievement, y_jitter, color = funding_agency)) +
-    geom_point(na.rm = TRUE, alpha = .4, size = 2, shape = 16) + # Adjust size as needed
-    scale_color_manual(values = c("USAID" = midnight_blue, "CDC" = viking, "PEPFAR" = slate),
-                       name = "Funding Agency",
-                       labels = c("USAID", "CDC", "PEPFAR")) +
+    geom_point(na.rm = TRUE, alpha = .5, size = 2, shape = 16) + # Adjust size as needed
+    scale_color_manual(values = c("USAID" = hunter, "CDC" = matterhorn),
+                       name = "Funding Agency") +
     facet_grid(rows = vars(indicator), cols = vars(type), scales = "free_y", switch = "y") +
     theme(strip.text = element_markdown()) +
     scale_x_continuous(
@@ -208,7 +204,7 @@ generate_plot <- function(df_achv_viz, meta, cntry) {
     theme(axis.text.x = element_text(),
           axis.text.y = element_blank(),
           strip.text = element_markdown(),
-          panel.spacing.y = unit(2, "lines")) + # Adjust for spacing
+          panel.spacing.y = unit(1, "lines")) + # Adjust for spacing
     guides(size = "none", shape = guide_legend())
 }
 
@@ -222,16 +218,41 @@ run_achievement_analysis <- function(df, cntry, meta, jitter_factor) {
   # Combine them
   df_combined <- combine_data(df_achv, df_vl_vs)
   # Set data up to be visualized
-  df_achv_viz <- process_achievement_viz(df_combined, cntry, jitter_factor)
+  df_achv_viz <- process_achievement_viz(df_combined, cntry)
   # Plot
-  plot <- generate_plot(df_achv_viz, meta, cntry)
-  return(plot)
+  plot <- generate_plot(df_achv_viz, meta, cntry, jitter_factor)
+  return(list(plot = plot, df_achv_viz = df_achv_viz))
 }
 
 
 # Example usage:
-plot <- run_achievement_analysis(df_filtered, cntry, meta, .05)
-print(plot)
+result <- run_achievement_analysis(df_filtered, "South Sudan", meta, .05)
+print(result$plot)
+
+# Define the output directory and create it if it doesn't exist
+output_dir <- "plots_df/"
+dir.create(output_dir, showWarnings = FALSE)
+
+# Loop over each country in cop_ous and process the data
+lapply(cop_ous, function(cop_country) {
+  # Run the analysis for the current country
+  result <- run_achievement_analysis(df_filtered, cop_country, meta, .05)
+  plot <- result$plot
+  df_achv_viz <- result$df_achv_viz
+  
+  # Save the plot as a PNG file
+  plot_file <- file.path(output_dir, paste0("achievement_", cop_country, ".png"))
+  png(filename = plot_file, width = 700, height = 400)
+  print(plot)
+  dev.off()
+  
+  # Save the dataframe as a CSV file
+  csv_file <- file.path(output_dir, paste0("achievement_", cop_country, ".csv"))
+  write.csv(df_achv_viz, file = csv_file, row.names = FALSE)
+})
+
+output_file <- "df_filtered.csv"  # Specify the file path
+write.csv(df_filtered, file = output_file, row.names = FALSE)
 
 
 ################## TO DO #################################################
@@ -239,6 +260,7 @@ print(plot)
 # Formatting to explain some are true percentages and some are target achievement
 # What to do about TX_NET_NEW?
 # Cut Top 80%?
+# Do sizes for ones with small numbers of PSNUs? Change alpha depending on num PSNUs?
 # Adjust x scales?
 # What to do about jitter for AGYW? Currently its randomly distributed.
 
