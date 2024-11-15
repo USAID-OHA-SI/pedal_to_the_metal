@@ -125,14 +125,14 @@
       theme(strip.text = element_text(hjust = .5),
             strip.placement = "outside",
             axis.text.x = element_blank(),
-            plot.subtitle = element_markdown(hjust = 0.1),
+            plot.subtitle = element_markdown(hjust = 1),
             plot.title = element_text(hjust = 0.09),
             panel.spacing = unit(0.3, "line"),
             plot.margin = ggplot2::margin(0, 0, 0, 0, unit = "pt")
             )
     
     if(export)
-      save_png(cntry, "hrh", scale = 0.65)
+      save_png(cntry, "hrh", scale = 1.15, width = 5.4431, height = 2.36)
     
     return(v)
   }
