@@ -34,7 +34,14 @@ cntry <- "Zambia"
 # IMPORT ------------------------------------------------------------------
 
 df <- read_psd(path_msd)
-df_orig <- df
+
+# Pull the list of OUs for which visuals need to be generated
+cop_ous <- glamr::pepfar_country_list %>% 
+  filter(str_detect(operatingunit, "Region", negate = T)) %>% 
+  pull(operatingunit)
+
+df_orig <- df %>%
+  filter(country %in% cop_ous)
 
 # MUNGE -------------------------------------------------------------------
 
@@ -196,8 +203,7 @@ generate_plot <- function(df_achv_viz, meta, cntry) {
     coord_cartesian(clip = "off") +
     labs(x = NULL, y = NULL,
          # Change this as needed for the PDF
-         title = glue("{cntry} Target Acheivement FY{meta$curr_fy}Q{meta$curr_qtr} by psnu") %>% toupper,
-         caption = glue("Target achievement capped at 110% Source: {meta$source} US Agency for International Development")) +
+         caption = glue("Target achievement by PSNU (capped at 110%).")) +
     theme(axis.text.x = element_text(),
           axis.text.y = element_blank(),
           strip.text = element_markdown(),
