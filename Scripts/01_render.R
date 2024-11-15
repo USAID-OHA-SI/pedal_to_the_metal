@@ -80,7 +80,8 @@
   
 # Ordering based on order they appear in document
   
-  # Source Creation of dynamic text
+
+
   
   
 
@@ -92,6 +93,8 @@
   df_epi_stats <- prepare_epi_stats(df_epi)
   df_epi_cntrl <- prepare_epi_control(df_epi)
   df_95s <- prepare_95s_summary(df_epi)
+  
+  remove(ALL_AGE, ALL_SEX, GOAL, TARGET_YEAR)
   
   #Test
   create_epi_tbl(test_cntry) 
@@ -289,6 +292,13 @@
   si_clear_preview()
   
 
+# TABLE SUMARY ----------------------------------------------------------------
+  
+  # Source Creation of dynamic text
+  source("Create_main_text_table.R") 
+  
+  # Create Image paths inside table dataframe for Images1:N
+  
 
 
 
