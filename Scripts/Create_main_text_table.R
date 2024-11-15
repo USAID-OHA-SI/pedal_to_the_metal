@@ -91,8 +91,8 @@
     filter(fiscal_year == 2024)
   
   fin_FY23 <- fin_FY23 %>%
-    mutate(fundingagency2 = case_when(str_detect(fundingagency, "USAID") ~ "USAID",
-                                      TRUE ~ fundingagency))
+    mutate(fundingagency2 = case_when(str_detect(funding_agency, "USAID") ~ "USAID",
+                                      TRUE ~ funding_agency))
 
     ## find Above site programming cost ------
   
@@ -122,8 +122,8 @@
   ## find DREAMS data with comprehensive dataset ----------
   
   comp <- comp_raw %>%
-    mutate(fundingagency2 = case_when(str_detect(fundingagency, "USAID") ~ "USAID",
-                                      TRUE ~ fundingagency))
+    mutate(fundingagency2 = case_when(str_detect(funding_agency, "USAID") ~ "USAID",
+                                      TRUE ~ funding_agency))
   
   comp_dreams <- comp %>%
     filter(initiative_name == "DREAMS",
@@ -144,7 +144,7 @@
     summarise(agency_budget = sum(cop_budget_total)) %>%
     ungroup()
   
-  table(fin_FY23$fundingagency)
+  table(fin_FY23$funding_agency)
   
   bud_sum_count_agency_usaid <- bud_sum_count_agency %>%
     filter(fundingagency2 == "USAID") %>%
@@ -324,11 +324,13 @@
     rename(country_iso = "SpatialDimValueCode",
            year = "Period", 
            nurses = "Value")
+  
   nurses_2 <- nurses_new %>%
     group_by(country_iso) %>%
     filter(year == max(year)) %>%
     ungroup() %>%
     mutate(nurses = round(nurses, 0))
+  
   nurses_2 <- nurses_2 %>%
     mutate(nurses_d = case_when(nurses <= 40 ~ "Inadequate",
                                 nurses > 40 & nurses <= 100 ~ "Moderate",
@@ -357,6 +359,7 @@
                                h_exp > 15 ~ "Optimal")) %>%
     select(!c(year, country)) %>%
     rename(country_iso = SpatialDimValueCode)
+  
   gov$h_exp <- ifelse(!is.na(gov$h_exp), paste0(gov$h_exp, "%"), NA)
   
   
@@ -401,18 +404,9 @@
   # Need DRC instead of full name
   df_final <- df %>% clean_countries(colname = "country")
   
-    keep_df <- "df_final"
-    rm(list = ls()[sapply(ls(), function(x) is.data.frame(get(x)) & x != keep_df)])
+  keep_df <- "df_final"
+  rm(list = ls()[sapply(ls(), function(x) is.data.frame(get(x)) & x != keep_df)])
 
-# WRITE CSV with "-" for NAs ----------------------------------------------
-# 
-#   df %>% 
-#     mutate(age_dep_d = str_remove_all(age_dep_d, " Burden"),
-#            nurses_d = str_remove_all(nurses_d, " Adequate")) %>% 
-#     write_csv("Dataout/COP_numerical_summary.csv", na = "-")
-#   
 
-# REMOVE EXTRA OBJECTS ----------------------------------------------------
 
-  remove(ad, agency_totals, agency_totals_2, bud_sum_count, bud_sum_count_agency, cop_raw, cop_ou_iso, fin_FY23, fin_raw, gov_raw, nurses_raw, pepfar, pepfar_short, unaids_raw, vt_raw )  
   
