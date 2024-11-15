@@ -385,17 +385,3 @@ global_1 <- global %>%
 
   df <- df %>%
     select(country, country_iso, everything())
-  
-
-# CLEAN COUNTRY NAMES -----------------------------------------------------
-
-  # Need DRC inste  
-  
-
-# WRITE CSV with "-" for NAs ----------------------------------------------
-
-  df %>% 
-    mutate(age_dep_d = str_remove_all(age_dep_d, " Burden"),
-           nurses_d = str_remove_all(nurses_d, " Adequate")) %>% 
-    write_csv("Dataout/COP_numerical_summary.csv", na = "-")
-  

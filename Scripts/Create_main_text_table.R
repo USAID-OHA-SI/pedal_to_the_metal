@@ -75,7 +75,7 @@
 
 ## 7. run in nurses/midwives data ---------
 
-  nurses_url <- "1t-iwMadiQU1xrMaOxN2ISUvUl8IGOCIgc1d97nh56fE"
+  nurses_url <- "1ElfdcU0oZF_VNuEwuhvghResu7Ur11SuSF27IlO9GWQ"
   nurses_raw <- read_sheet(nurses_url)
 
 ## 8. gov health expenditure, originall here: https://www.who.int/data/gho/data/indicators/indicator-details/GHO/domestic-general-government-health-expenditure-(gghe-d)-as-percentage-of-general-government-expenditure-(gge) -----
@@ -91,10 +91,10 @@
     filter(fiscal_year == 2024)
   
   fin_FY23 <- fin_FY23 %>%
-    mutate(fundingagency2 = case_when(str_detect(funding_agency, "USAID") ~ "USAID",
-                                      TRUE ~ funding_agency))
-  
-  ## find Above site programming cost ------
+    mutate(fundingagency2 = case_when(str_detect(fundingagency, "USAID") ~ "USAID",
+                                      TRUE ~ fundingagency))
+
+    ## find Above site programming cost ------
   
   fin_FY23_USAID_ASP <- fin_FY23 %>%
     filter(fundingagency2 == "USAID",
@@ -122,8 +122,8 @@
   ## find DREAMS data with comprehensive dataset ----------
   
   comp <- comp_raw %>%
-    mutate(fundingagency2 = case_when(str_detect(funding_agency, "USAID") ~ "USAID",
-                                      TRUE ~ funding_agency))
+    mutate(fundingagency2 = case_when(str_detect(fundingagency, "USAID") ~ "USAID",
+                                      TRUE ~ fundingagency))
   
   comp_dreams <- comp %>%
     filter(initiative_name == "DREAMS",
@@ -143,6 +143,8 @@
     group_by(country, fundingagency2) %>%
     summarise(agency_budget = sum(cop_budget_total)) %>%
     ungroup()
+  
+  table(fin_FY23$fundingagency)
   
   bud_sum_count_agency_usaid <- bud_sum_count_agency %>%
     filter(fundingagency2 == "USAID") %>%
@@ -186,10 +188,14 @@
   remove(global)
   
   agency_totals <- global_1 %>%
-    group_by(operatingunit, indicator, funding_agency) %>%
+    group_by(operatingunit, indicator, funding_agency, standardizeddisaggregate) %>%
     summarise(ind_c = sum(cumulative, na.rm = T)) # confirm this is right with the "Dedup" category - does it subtract?
   
-  agency_totals_2 <- agency_totals %>%
+  # filter to only total Num
+  agency_totals <- agency_totals %>%
+    filter(standardizeddisaggregate == "Total Numerator")
+    
+  agency_totals_2 <- agency_totals %>%  
     ungroup() %>%
     group_by(operatingunit, indicator) %>%
     mutate(sh = round((ind_c / sum(ind_c, na.rm = TRUE)) * 100, 0))
@@ -312,35 +318,25 @@
   
   
   # nurses/midwives data
-  nurses <- nurses_raw %>%
-    select("Countries, territories and areas", "Year", "Nursing and midwifery personnel (per 10 000 population)") %>%
-    rename(country = "Countries, territories and areas", 
-           nurses = "Nursing and midwifery personnel (per 10 000 population)")
-  
-  nurses_2 <- nurses %>%
-    group_by(country) %>%
-    filter(Year == max(Year)) %>%
+  # new nurses data
+  nurses_new <- nurses_raw %>%
+    select("SpatialDimValueCode", "Period", "Value") %>%
+    rename(country_iso = "SpatialDimValueCode",
+           year = "Period", 
+           nurses = "Value")
+  nurses_2 <- nurses_new %>%
+    group_by(country_iso) %>%
+    filter(year == max(year)) %>%
     ungroup() %>%
     mutate(nurses = round(nurses, 0))
-  
   nurses_2 <- nurses_2 %>%
-    mutate(nurses_d = case_when(nurses <= 40 ~ "Below Adequate",
+    mutate(nurses_d = case_when(nurses <= 40 ~ "Inadequate",
                                 nurses > 40 & nurses <= 100 ~ "Moderate",
                                 nurses > 100 ~ "Optimal",
-                                     TRUE ~ NA_character_)) %>%
-    select(!Year) %>%
-    mutate(country = case_when(country == "Myanmar" ~ "Burma",
-                               country == "Lao People's Democratic Republic" ~ "Laos",
-                               country == "United Republic of Tanzania" ~ "Tanzania",
-                               country == "Viet Nam" ~ "Vietnam",
-                               TRUE ~ country))
+                                TRUE ~ NA_character_)) %>%
+    select(!year)
   
-  # need to combine on year and check for spelling
-  nurses_3 <- pepfar_short %>%
-    left_join(nurses_2) %>%
-    select(!c(operatingunit_iso, country))
-  
-  nurses_3$nurses <- as.character(nurses_3$nurses)
+  nurses_2$nurses <- as.character(nurses_2$nurses)
 
     # gov expenditure data
   gov <- gov_raw %>%
@@ -368,7 +364,7 @@
   sus1 <- pepfar_short %>%
     left_join(gov) %>%
     left_join(ad) %>%
-    left_join(nurses_3)
+    left_join(nurses_2)
 
   
 # JOIN all into mega table and cut down to COP countries -------
