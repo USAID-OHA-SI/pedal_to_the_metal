@@ -373,4 +373,6 @@ global_1 <- global %>%
 
   df <- df %>%
     select(country, country_iso, everything())
+
+  write.csv(df, "C:/Users/mzendt/Documents/SI general/COP one pager/COP one pager/topline_indicators.csv", row.names = FALSE)
   
