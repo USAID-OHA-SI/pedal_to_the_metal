@@ -32,6 +32,7 @@
   source("Scripts/dhi_plots.R")  
   source("Scripts/10-10-10s.R")
   source("Scripts/create_epi_control_summary_table.R")
+  source("Scripts/95s_Age_Sex.R")
 
 # GLOBAL VARIABLES --------------------------------------------------------
   
@@ -228,19 +229,20 @@
     str_sub(end = 3) %>% 
     setdiff(v_iso)
   
-  remove()
+  ## CLEAR 10s data ----
+  remove(df_tens, df_tens_viz)
 
 # EPI SUMMARY TABLE -------------------------------------------------------
 
   #Create data
-  # Can use df_unaids, but need appropriate filters
+  #Can use df_unaids, but need appropriate filters
   df_epi <- load_and_filter_data() #calls load_unaids() within
   df_epi_stats <- prepare_epi_stats(df_epi)
   df_epi_cntrl <- prepare_epi_control(df_epi)
   df_95s <- prepare_95s_summary(df_epi)
 
   #Test
-  create_epi_tbl("Mozambique") 
+  create_epi_tbl(test_cntry) 
   
   #iterate
   walk(v_countries[24], .f = ~ create_epi_tbl(.x) %>% 
@@ -251,7 +253,29 @@
     str_sub(end = 3) %>% 
     setdiff(v_iso)
   
-  ## CLEAR BUDGET DATA ----
+## CLEAR UNAIDS DATA ----
   rm(df_95s, df_epi, df_epi_cntrl, df_epi_stats)
+  
+# EPI GAP LOLLIPOPS -------------------------------------------------------
+
+  #Create data
+  df_epi_gaps <- prep_tt_tbl(df_tt)
+  
+  #Test
+  plot_epi_gaps(df_epi_gaps, "Zambia")
+  si_preview()
+  
+  #iterate
+  walk(v_countries, .f = ~ plot_epi_gaps(df_epi_gaps, .x))  
+  
+  #check
+  list.files("Images", "epi-gaps") %>% 
+    str_sub(end = 3) %>% 
+    setdiff(v_iso)
+  
+  ## CLEAR EPI GAPS DATA ----
+  rm(df_epi_gaps, df_tt)
+  
+# 
   
   

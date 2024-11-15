@@ -8,32 +8,32 @@
 
 # LOCALS & SETUP ============================================================================
 
-  # Libraries
-  library(gagglr)
-  library(tidyverse)
-  library(scales)
-  library(sf)
-  library(systemfonts)
-  library(tidytext)
-  library(patchwork)
-  library(ggtext)
-  library(glue)
-  library(gt)
-  library(gtExtras)
-  #remotes::install_github("USAID-OHA-SI/mindthegap", ref = "dev_edms") #install UNAIDS package from dev_edms branch
-  library(mindthegap)
-
-  source("Scripts/zero_margins.R")
-    
-  
-  # REF ID for plots
-    ref_id <- "06c95022"
-    
-  # Functions  
-    #list of countries  
-    cop_ous <- glamr::pepfar_country_list %>% 
-      filter(str_detect(operatingunit, "Region", negate = T)) %>% 
-      pull(operatingunit)
+  # # Libraries
+  # library(gagglr)
+  # library(tidyverse)
+  # library(scales)
+  # library(sf)
+  # library(systemfonts)
+  # library(tidytext)
+  # library(patchwork)
+  # library(ggtext)
+  # library(glue)
+  # library(gt)
+  # library(gtExtras)
+  # #remotes::install_github("USAID-OHA-SI/mindthegap", ref = "dev_edms") #install UNAIDS package from dev_edms branch
+  # library(mindthegap)
+  # 
+  # source("Scripts/zero_margins.R")
+  #   
+  # 
+  # # REF ID for plots
+  #   ref_id <- "06c95022"
+  #   
+  # # Functions  
+  #   #list of countries  
+  #   cop_ous <- glamr::pepfar_country_list %>% 
+  #     filter(str_detect(operatingunit, "Region", negate = T)) %>% 
+  #     pull(operatingunit)
 
 # LOAD DATA ============================================================================  
 
@@ -41,19 +41,20 @@
       dplyr::filter(indicator_type == "Percent", 
                     year == 2023)
     
-    #Define the required combinations of indicator, age, and sex
-    required_combinations <- expand.grid(
-      indicator = c("Percent Known Status of PLHIV", 
-                    "Percent on ART with Known Status",
-                    "Percent VLS on ART"),
-      age = c("0-14", "15+", "All"),
-      sex = c("Female", "Male", "All"),
-      stringsAsFactors = FALSE
-    )
 
 # MUNGE ============================================================================
   
     prep_tt_tbl <- function(df) {
+      
+      #Define the required combinations of indicator, age, and sex
+      required_combinations <- expand_grid(
+        country = glamr::pepfar_country_list$country,
+        indicator = c("Percent Known Status of PLHIV", 
+                      "Percent on ART with Known Status",
+                      "Percent VLS on ART"),
+        age_sex = c("0-14_All", "15+_Male", "15+_Female")
+      ) %>% 
+        separate_wider_delim(age_sex, names = c("age", "sex"), delim = "_") 
       
       #Limit the data
     df_rel_lim <- df %>% 
@@ -64,17 +65,16 @@
              !(sex == "All" & age == "All"),
              ! (sex == "All" & age == "15+")) %>% 
       select(country, indicator,age, sex, estimate) %>% 
-      
       mutate(share = estimate/100,
              flag = share >= 0.95) 
     
     df_viz <- df_rel_lim %>% 
-      tidyr::complete(country, indicator, age, sex, fill = list(estimate = NA)) %>% 
-      dplyr::right_join(required_combinations, by = c("indicator", "age", "sex")) %>% 
+      # tidyr::complete(country, indicator, age, sex, fill = list(estimate = NA)) %>% 
+      dplyr::right_join(required_combinations, by = c("country", "indicator", "age", "sex")) %>% 
       filter(!(sex == "All" & age == "15+"),
              !(age == "0-14" & sex %in% c("Male", "Female"))
       ) %>% 
-      mutate(stroke_color = ifelse(flag == FALSE, glitr::hw_orchid_bloom, glitr::hw_hunter),
+      mutate(stroke_color = ifelse(flag == FALSE, glitr::si_palettes$orchid_bloom_t[2], glitr::viking),
             sex = str_sub(sex, end = 1),
              age_sex = glue("{age} {sex}"),
              age_sex = str_remove(age_sex, " A"),
@@ -94,10 +94,10 @@
     return(df_viz)
     }
     
-    df_viz <- prep_tt_tbl(df_tt)
+    # df_viz <- prep_tt_tbl(df_tt)
     
-    df_sa <- prep_tt_tbl(df_tt) %>% 
-      filter(country == "South Africa")
+    # df_sa <- prep_tt_tbl(df_tt) %>% 
+    #   filter(country == "South Africa")
     
     #purrr::map(cop_ous, ~prep_tt_tbl(df_tt, .))
     
@@ -111,8 +111,8 @@
     
     plot_epi_gaps <- function(df, cntry, export = TRUE) {
       
-      df <- df_viz %>% 
-        filter(country == cntry, !(sex == "All" & age == "15+"))
+      df <- df %>% 
+        filter(country == cntry, !(sex == "All" & age == "15+")) 
       
       v <- df %>% ggplot(aes(x = share, y = indic_age_sex, color = stroke_color)) + 
       geom_vline(xintercept = 0.95, linetype = "dashed", color = slate) +
@@ -128,32 +128,32 @@
       facet_grid(indicator ~ .,  scales = "free_y", switch = "y") +
       scale_color_identity() + 
       si_style_xgrid() +
-      theme(strip.text = element_text(hjust = .5, size = 10),
+      theme(strip.text = element_text(hjust = .5, size = 8),
             strip.placement = "outside", 
             panel.spacing = unit(.25, "line"),
-            plot.title = element_text(hjust = 0.1),
+            plot.title = element_text(hjust = 0.1), 
             plot.margin = ggplot2::margin(0, 0, 0, 0, unit = "pt")) +
-      labs(x = NULL, y = NULL,
-           title = glue("KEY EPIDEMIOLOGICAL GAPS")
+      labs(x = NULL, y = NULL
+           # title = glue("KEY EPIDEMIOLOGICAL GAPS")
       ) 
       
       if(export)
-        save_png(cntry, "epi", "gaps", scale = 0.5)
+        save_png(cntry, "epi", "gaps", scale = 1.2, width = 2.66, height = 1.83)
       
       return(v)
     }
       
 
-    plot_epi_gaps(df_viz, "Zambia")
-    save_png("Zambia", "epi", "gaps", scale = 0.5)
-    
-    cntry_list  <- 
-      pepfar_country_list %>% 
-      filter(str_detect(operatingunit, "Region", negate = T), 
-             operatingunit %ni% c("Cameroon", "Ukraine")) %>% 
-      pull(operatingunit)
-    
-  map(cntry_list, .f = ~plot_epi_gaps(df_viz, .x))
+  #   plot_epi_gaps(df_viz, "Zambia")
+  #   save_png("Zambia", "epi", "gaps", scale = 0.5)
+  #   
+  #   cntry_list  <- 
+  #     pepfar_country_list %>% 
+  #     filter(str_detect(operatingunit, "Region", negate = T), 
+  #            operatingunit %ni% c("Cameroon", "Ukraine")) %>% 
+  #     pull(operatingunit)
+  #   
+  # map(cntry_list, .f = ~plot_epi_gaps(df_viz, .x))
 
 # SPINDOWN ============================================================================
 
