@@ -41,41 +41,47 @@
 
 
 ## 1. general financial dataset ----------
-financial_filepath <- si_path() %>% 
-  return_latest("Financial")
-fin_raw <- read_psd(financial_filepath)
+  
+  financial_filepath <- si_path() %>% 
+    return_latest("Financial")
+  fin_raw <- read_psd(financial_filepath)
 
 
 ## 2. the comprehensive financial dataset -----------
 
-comp_filepath <- si_path() %>% 
-  return_latest("Comprehensive")
-comp_raw <- read_psd(comp_filepath)
+  comp_filepath <- si_path() %>% 
+    return_latest("Comprehensive")
+  comp_raw <- read_psd(comp_filepath)
 
 ## 3. UNAIDS data -----
-unaids_raw <- load_unaids()
+  
+  unaids_raw <- load_unaids()
 
 ## 4. vertical transmission --------
-vt_url <- "1U5K9ppZJvF4aWbVvP2cXeTu6N2Ua6SUOiLxqwcB2f4o"
-vt_raw <- read_sheet(vt_url)
+ 
+  glamr::load_secrets()
+  vt_url <- "1U5K9ppZJvF4aWbVvP2cXeTu6N2Ua6SUOiLxqwcB2f4o"
+  vt_raw <- read_sheet(vt_url)
 
 ## 5. MER data --------
-all_ou_filepath <- si_path() %>% 
-  return_latest("OU_IM_FY22-25")
-
-global <- read_psd(all_ou_filepath)
+  
+  all_ou_filepath <- si_path() %>% return_latest("OU_IM_FY22-25")
+  global <- read_psd(all_ou_filepath)
 
 ## 6. age dependency data - originally from here: https://databank.worldbank.org/source/gender-statistics/Series/SP.POP.DPND# ----------
-ad_url <- "1UM1f-DepxmATmmMOUXaPLAuICLsueBA71AZaC7CQXfQ"
-ad_raw <- read_sheet(ad_url)
+  
+  ad_url <- "1UM1f-DepxmATmmMOUXaPLAuICLsueBA71AZaC7CQXfQ"
+  ad_raw <- read_sheet(ad_url)
 
 ## 7. run in nurses/midwives data ---------
-nurses_url <- "1t-iwMadiQU1xrMaOxN2ISUvUl8IGOCIgc1d97nh56fE"
-nurses_raw <- read_sheet(nurses_url)
+
+  nurses_url <- "1t-iwMadiQU1xrMaOxN2ISUvUl8IGOCIgc1d97nh56fE"
+  nurses_raw <- read_sheet(nurses_url)
 
 ## 8. gov health expenditure, originall here: https://www.who.int/data/gho/data/indicators/indicator-details/GHO/domestic-general-government-health-expenditure-(gghe-d)-as-percentage-of-general-government-expenditure-(gge) -----
-gov_url <- "1X4iVKzhUiG_q5GYE_lU6fCrak7d94N8q1OGFoH5bqro"
-gov_raw <- read_sheet(gov_url)
+  
+  gov_url <- "1X4iVKzhUiG_q5GYE_lU6fCrak7d94N8q1OGFoH5bqro"
+  gov_raw <- read_sheet(gov_url)
 
 
 # Calculate budget table ----------
@@ -85,8 +91,8 @@ gov_raw <- read_sheet(gov_url)
     filter(fiscal_year == 2024)
   
   fin_FY23 <- fin_FY23 %>%
-    mutate(fundingagency2 = case_when(str_detect(fundingagency, "USAID") ~ "USAID",
-                                      TRUE ~ fundingagency))
+    mutate(fundingagency2 = case_when(str_detect(funding_agency, "USAID") ~ "USAID",
+                                      TRUE ~ funding_agency))
   
   ## find Above site programming cost ------
   
@@ -116,8 +122,8 @@ gov_raw <- read_sheet(gov_url)
   ## find DREAMS data with comprehensive dataset ----------
   
   comp <- comp_raw %>%
-    mutate(fundingagency2 = case_when(str_detect(fundingagency, "USAID") ~ "USAID",
-                                      TRUE ~ fundingagency))
+    mutate(fundingagency2 = case_when(str_detect(funding_agency, "USAID") ~ "USAID",
+                                      TRUE ~ funding_agency))
   
   comp_dreams <- comp %>%
     filter(initiative_name == "DREAMS",
@@ -171,10 +177,13 @@ gov_raw <- read_sheet(gov_url)
   
 
 # Calculate result/share indicators ---------
-global_1 <- global %>%  
-  filter(indicator %in% c("HTS_TST", "PrEP_NEW", "TX_CURR"),
-         fiscal_year == 2024) %>%
-    select(operatingunit, country, indicator, funding_agency, standardizeddisaggregate, cumulative)
+  
+  global_1 <- global %>%  
+    filter(indicator %in% c("HTS_TST", "PrEP_NEW", "TX_CURR"),
+           fiscal_year == 2024) %>%
+      select(operatingunit, country, indicator, funding_agency, standardizeddisaggregate, cumulative)
+  
+  remove(global)
   
   agency_totals <- global_1 %>%
     group_by(operatingunit, indicator, funding_agency) %>%
@@ -251,6 +260,7 @@ global_1 <- global %>%
   new_inf_2$Sh_NI_Ped <- ifelse(!is.na(new_inf_2$Sh_NI_Ped),
                        paste0(round(new_inf_2$Sh_NI_Ped * 100, 0), "%"),
                        NA)
+  
   new_inf_2$Sh_NI_Adu <- ifelse(!is.na(new_inf_2$Sh_NI_Adu),
                          paste0(round(new_inf_2$Sh_NI_Adu * 100, 0), "%"),
                          NA)
@@ -258,7 +268,8 @@ global_1 <- global %>%
   new_inf_3 <- new_inf_2 %>%
     select(iso, Sh_NI_Ped, Sh_NI_Adu)
 
-  ## Vertical transmission -----
+## Vertical transmission -----
+
   vt <- vt_raw %>%
     select(Country, "2023") %>%
     rename(country = Country,
@@ -278,6 +289,7 @@ global_1 <- global %>%
     rename(iso= country_iso)
   
 # Create UNAIDS table --------  
+
   unaids_table <- new_youth %>%
     full_join(new_adults, by = join_by(iso)) %>%
     full_join(new_inf_3) %>%
@@ -286,6 +298,7 @@ global_1 <- global %>%
   
   
 # Calculate sustainability metrics -----------     
+  
   ad <- ad_raw %>%
     select("Country Name", "Country Code", "2023 [YR2023]") %>%
     rename(age_dep = "2023 [YR2023]",
@@ -385,3 +398,25 @@ global_1 <- global %>%
 
   df <- df %>%
     select(country, country_iso, everything())
+  
+
+# CLEAN COUNTRY NAMES -----------------------------------------------------
+
+  # Need DRC instead of full name
+  df_final <- df %>% clean_countries(colname = "country")
+  
+    keep_df <- "df_final"
+    rm(list = ls()[sapply(ls(), function(x) is.data.frame(get(x)) & x != keep_df)])
+
+# WRITE CSV with "-" for NAs ----------------------------------------------
+# 
+#   df %>% 
+#     mutate(age_dep_d = str_remove_all(age_dep_d, " Burden"),
+#            nurses_d = str_remove_all(nurses_d, " Adequate")) %>% 
+#     write_csv("Dataout/COP_numerical_summary.csv", na = "-")
+#   
+
+# REMOVE EXTRA OBJECTS ----------------------------------------------------
+
+  remove(ad, agency_totals, agency_totals_2, bud_sum_count, bud_sum_count_agency, cop_raw, cop_ou_iso, fin_FY23, fin_raw, gov_raw, nurses_raw, pepfar, pepfar_short, unaids_raw, vt_raw )  
+  
