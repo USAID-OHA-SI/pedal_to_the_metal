@@ -312,7 +312,7 @@
     }
   )
 
-write_csv(df_final, "Images/hiv_data_briefer_table.csv", na = "-")  
+write_csv(df_final_output, "Images/hiv_data_briefer_table.csv", na = "-")  
 
 
   
