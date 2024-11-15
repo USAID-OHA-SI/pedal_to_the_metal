@@ -94,7 +94,10 @@
       compress_rows(font_size = 11) %>%
       tab_options(column_labels.hidden = TRUE) %>%
       cols_hide(country) %>% 
-      sub_missing(columns = everything(), missing_text = "-")
+      sub_missing(columns = everything(), missing_text = "-") %>% 
+      tab_options(
+        table.border.bottom.style = "hidden"
+      )
   }
 
   # Load UNAIDS data

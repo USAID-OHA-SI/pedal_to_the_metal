@@ -183,7 +183,7 @@
       compress_rows(font_size = 11) 
     
     if(export)
-      save_gt(t, cntry, "budget", "tbl")
+      save_gt(t, cntry, "budget", "tbl", vwidth = 191, vheight = 47)
     
     return(t)
     

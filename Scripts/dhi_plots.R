@@ -125,7 +125,12 @@
             axis.text.y = element_markdown(size = 7),
             plot.subtitle = element_markdown(),
             plot.margin = ggplot2::margin(0, 0, 0, 0, unit = "pt")
-            )
+            ) +
+      theme(
+        panel.background = element_rect(fill = NA, color = NA),  # Make the panel background transparent
+        plot.background = element_rect(fill = NA, color = NA),   # Make the entire plot background transparent
+        legend.background = element_rect(fill = NA, color = NA)  # Make legend background transparent (if present)
+      )
     
     
     if(export)
@@ -235,6 +240,7 @@
     
     make_dhi_cat_table <- function(df, cntry, export = TRUE){
       
+      background_color <- "#edf6fa"
       custom_palette <- colorRampPalette(c(si_palettes$viking_t[1], si_palettes$viking_t[5]))(20)
       
       df_cntry <- df %>% 
@@ -287,6 +293,29 @@
             columns = agency)  # Target specific columns (e.g., mpg and cyl)
           ) %>% 
         compress_rows(font_size = 14) 
+        # gtExtras::gt_theme_nytimes()
+        # tab_options(
+        #   table.background.color = background_color,  # This will make it effectively transparent when exported to an HTML-friendly context
+        #   column_labels.background.color = background_color,
+        #   # Transparent column header
+        # ) %>%
+        # tab_style(
+        #   style = list(
+        #     cell_fill(color = background_color) # Set background color for the header
+        #   ),
+        #   locations = cells_column_labels(columns = everything()) # Apply to all column headers
+        # ) %>% 
+        # 
+        # tab_options(
+        #   table.border.top.style = "none",         # Remove the top border of the entire table
+        #   table.border.bottom.style = "none",      # Remove the bottom border of the entire table
+        #   table.border.left.style = "none",        # Remove the left border of the entire table
+        #   table.border.right.style = "none",       # Remove the right border of the entire table
+        #   table.border.top.width = px(0),          # Set top border width to zero
+        #   table.border.bottom.width = px(0),       # Set bottom border width to zero
+        #   table.border.left.width = px(0),         # Set left border width to zero
+        #   table.border.right.width = px(0),
+        # ) 
       
       if(export)
         save_gt(t, cntry, "dhi", "cat-tbl")
