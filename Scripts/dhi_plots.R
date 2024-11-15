@@ -113,9 +113,10 @@
       mutate(axis_lab = v_subt) %>% 
       ggplot(aes(estimated_budget, axis_lab, fill = fill_color)) +
       geom_col(na.rm = TRUE) +
-      geom_text(aes(label = label_percent()(budget_share)), na.rm = TRUE,
-                family = "Source Sans Pro", hjust = -.3, size = 10/.pt,
-                color = matterhorn) +
+      geom_text(aes(label = label_percent()(budget_share),
+                    hjust = ifelse(budget_share < .1, -0.4, 1)), na.rm = TRUE,
+                family = "Source Sans Pro", size = 10/.pt,
+                color = "white", fontface = "bold") +
       scale_fill_identity() +
       labs(x = NULL, y = NULL) +
       si_style_nolines() +
@@ -196,8 +197,8 @@
         geom_blank(aes(share*1.2))+
         geom_col(na.rm = TRUE, width = 0.25) +
         geom_text(aes(label = label_percent(1)(share)),
-                  na.rm = TRUE, hjust = -0.05,
-                  family = "Source Sans Pro", color = matterhorn) +
+                  na.rm = TRUE, hjust = .3,
+                  family = "Source Sans Pro", color = "white", fontface = "bold") +
         #facet_grid(~fct_rev(primary_system_category)) +
         facet_wrap(~fct_rev(primary_system_category), nrow = 1) +
         labs(x = NULL, y = NULL) +
