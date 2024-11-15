@@ -293,22 +293,20 @@
   # Source Creation of dynamic text
   source("Scripts/Create_main_text_table.R") 
   
- df_final <-  df_final %>% 
-    mutate(age_dep_d = str_remove_all(age_dep_d, " Burden"),
-            nurses_d = str_remove_all(nurses_d, " Adequate"))
+ df_final_output <-  df_final %>% 
+    mutate(nurses_d = str_replace_all(nurses_d, "Below Adequate", "Inadequate") %>% tolower(), 
+          h_exp_d = tolower(h_exp_d),
+          age_dep_d = tolower(age_dep_d))
  
   
-  # Create Image paths inside table dataframe for Images1:N
+ # Create Image paths inside table data frame for Images1:N
   # Preserve order in which they appear on page in AI
   tbl_list <- list("epi-tbl", "epi-gaps", "kp-policy", "program",
                    "budget-tbl", "budget-trend", "budget-lp-share", 
                    "hrh", "dhi-cat-tbl", "dhi-overview")
   
   
-  df_final <- reduce(
-    seq_along(tbl_list),
-    .init = df_final,
-    .f = function(df, i) {
+  df_final_output <- reduce(seq_along(tbl_list), .init = df_final_output, .f = function(df, i) {
       column_name <- glue("@image{i}")
       df %>% mutate(!!column_name := glue("{country_iso}_{tbl_list[[i]]}.png"))
     }
@@ -316,9 +314,7 @@
 
 write_csv(df_final, "Images/hiv_data_briefer_table.csv", na = "-")  
 
-  
-  
-  
+
   
 
 
