@@ -4,7 +4,7 @@
 # REF ID:   9c6a789d 
 # LICENSE:  MIT
 # DATE:     2024-10-31
-# UPDATED:  2024-11-14
+# UPDATED:  2024-11-16
 
 # DEPENDENCIES ------------------------------------------------------------
   
@@ -205,7 +205,7 @@
   
   prep_lp_share <- function(df){
     
-    ptnr_type <- c("Local", "International", "TBD") #"Unknown" [M&O]
+    ptnr_type <- c("Local", "International") #"Unknown" [M&O],  "TBD"
     
     df_lp <- df %>% 
       filter(fiscal_year == max(fiscal_year),
@@ -213,6 +213,7 @@
       remove_mo() %>% 
       mutate(local_prime_partner = ifelse(mech_name == "TBD" | prime_partner_name == "TBD", "TBD", local_prime_partner),
              local_prime_partner = factor(local_prime_partner, ptnr_type) %>% fct_rev()) %>% 
+      filter(local_prime_partner != "TBD") %>% #remove TBD mechanisms
       count(country, fiscal_year, local_prime_partner,
             wt = cop_budget_total, name = "cop_budget_total")
     
@@ -247,16 +248,17 @@
       ggplot(aes(cop_budget_total, country, fill = local_prime_partner)) +
       geom_col(width = 0.05) +
       scale_fill_manual(values = c("Local" = si_palettes$hunter_t[1], 
-                                   "International" = si_palettes$hunter_t[4], #grey20k, 
+                                   "International" = si_palettes$hunter_t[4] #grey20k, 
                                    # "Unknown" = si_palettes$hunter_t[5], #grey30k
-                                   "TBD" = si_palettes$hunter_t[5] #grey30k
+                                   # "TBD" = si_palettes$hunter_t[5] #grey30k
                                    )) +
       geom_text(aes(label = pt_label), na.rm = TRUE, color = si_palettes$hunter_t[1],
                 family = "Source Sans Pro", fontface = "bold", hjust = -.2, size = 14/.pt) +
       labs(x = NULL, y = NULL,
            # title = glue("USAID BUDGET TO <span style = 'color:{si_palettes$hunter_t[1]};'>LOCAL PARTNERS</span>"),
-           subtitle = glue("FY{str_sub(df_cntry$fiscal_year, -2)} Budget [{tbd_share} classified as 'TBD']")) +
-           #caption = "Note: Includes SCH") +
+           # subtitle = glue("FY{str_sub(df_cntry$fiscal_year, -2)} Budget [{tbd_share} classified as 'TBD']")) +
+           subtitle = glue("FY{str_sub(df_cntry$fiscal_year, -2)} Budget")) +
+           #caption = "Note: Excluded M&O and TBD mechanisms, but includes SCH") +
       si_style_nolines() +
       scale_y_discrete(expand = expansion(mult = 0)) +
       theme(axis.text = element_blank(),
@@ -269,14 +271,5 @@
       save_png(cntry, "budget", "lp-share", height = .75, width = 5, scale = 1.05)
     
     return(v)
-  }
-  
-  #test 
-   # df_lp_share <- prep_lp_share(df_fsd)
-   # 
-   # map(v_countries[20],
-   #     ~plot_lp_share(df_lp_share, .x, FALSE))
-   
-
-  
+  }  
   
