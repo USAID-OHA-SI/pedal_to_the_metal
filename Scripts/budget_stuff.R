@@ -231,7 +231,18 @@
       mutate(share = cop_budget_total / sum(cop_budget_total)) %>% 
       ungroup() %>% 
       mutate(pt_label = case_when(local_prime_partner == "Local" ~ 
-                                    label_percent(1)(share)))
+                                    label_percent(1)(share))) %>% 
+      ungroup() %>% 
+      mutate(hjust = case_when(
+        local_prime_partner == "Local" & share > 0.06 ~ 1.3,
+        local_prime_partner == "Local" & share <= 0.06 ~ -0.3,
+        TRUE ~ NA_real_
+      ),
+      text_color = case_when(
+        local_prime_partner == "Local" & share > 0.06 ~ "white",
+        local_prime_partner == "Local" & share < 0.06 ~ si_palettes$hunter_t[1],
+        TRUE ~ NA_character_)
+      )
     
     return(df_lp)
   }
@@ -244,7 +255,7 @@
     tbd_share <- label_percent(1)(df_cntry[df_cntry$local_prime_partner == "TBD",]$share)
     
     v <- df_cntry %>% 
-      mutate(local_prime_partner = fct_relevel(local_prime_partner, c("TBD", "International", "Local"))) %>% 
+      mutate(local_prime_partner = fct_relevel(local_prime_partner, c("International", "Local"))) %>% 
       ggplot(aes(cop_budget_total, country, fill = local_prime_partner)) +
       geom_col(width = 0.05) +
       scale_fill_manual(values = c("Local" = si_palettes$hunter_t[1], 
@@ -252,14 +263,18 @@
                                    # "Unknown" = si_palettes$hunter_t[5], #grey30k
                                    # "TBD" = si_palettes$hunter_t[5] #grey30k
                                    )) +
-      geom_text(aes(label = pt_label), na.rm = TRUE, color = si_palettes$hunter_t[1],
-                family = "Source Sans Pro", fontface = "bold", hjust = -.2, size = 14/.pt) +
+      geom_text(aes(label = pt_label, 
+                    hjust = hjust,
+                    color = text_color), 
+                na.rm = TRUE, 
+                family = "Source Sans Pro", fontface = "bold", size = 14/.pt) +
       labs(x = NULL, y = NULL,
            # title = glue("USAID BUDGET TO <span style = 'color:{si_palettes$hunter_t[1]};'>LOCAL PARTNERS</span>"),
            # subtitle = glue("FY{str_sub(df_cntry$fiscal_year, -2)} Budget [{tbd_share} classified as 'TBD']")) +
            subtitle = glue("FY{str_sub(df_cntry$fiscal_year, -2)} Budget")) +
            #caption = "Note: Excluded M&O and TBD mechanisms, but includes SCH") +
       si_style_nolines() +
+      scale_color_identity() +
       scale_y_discrete(expand = expansion(mult = 0)) +
       theme(axis.text = element_blank(),
             plot.title = element_markdown(),
