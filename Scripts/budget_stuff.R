@@ -75,7 +75,7 @@
       geom_errorbar(aes(ymin = cop_budget_total, ymax = cop_budget_total), 
                     linewidth = 0.5, width = 0.75, colour = grey50k, position = "identity") +
       geom_text(aes(label = pt_label), na.rm = TRUE, color = "white",
-                family = "Source Sans Pro", fontface = "bold", vjust = 1.2, size = 11/.pt) +
+                family = "Source Sans Pro", fontface = "bold", vjust = 1.2, size = 10/.pt) +
       scale_y_continuous(label = label_currency(scale = 1e-6, suffix = "m")) +
       scale_fill_manual(values = c("PEPFAR" = grey20k,
                                    "USAID" = si_palettes$hunter_t[1])) +
@@ -268,10 +268,10 @@
                     color = text_color), 
                 na.rm = TRUE, 
                 family = "Source Sans Pro", fontface = "bold", size = 14/.pt) +
-      labs(x = NULL, y = NULL,
+      labs(x = NULL, y = NULL) +
            # title = glue("USAID BUDGET TO <span style = 'color:{si_palettes$hunter_t[1]};'>LOCAL PARTNERS</span>"),
            # subtitle = glue("FY{str_sub(df_cntry$fiscal_year, -2)} Budget [{tbd_share} classified as 'TBD']")) +
-           subtitle = glue("FY{str_sub(df_cntry$fiscal_year, -2)} Budget")) +
+           # subtitle = glue("FY{str_sub(df_cntry$fiscal_year, -2)} Budget")) +
            #caption = "Note: Excluded M&O and TBD mechanisms, but includes SCH") +
       si_style_nolines() +
       scale_color_identity() +
@@ -283,7 +283,7 @@
             )
     
     if(export)
-      save_png(cntry, "budget", "lp-share", height = .75, width = 5, scale = 1.05)
+      save_png(cntry, "budget", "lp-share", height = .425, width = 5, scale = 1.05)
     
     return(v)
   }  

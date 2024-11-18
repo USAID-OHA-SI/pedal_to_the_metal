@@ -122,7 +122,7 @@
                       indicator_order = dplyr::case_when(adoption_level == "Not adopted" ~ 3,
                                                          adoption_level == "Partial" ~ 2, 
                                                          TRUE ~ 1),
-                      fill_color = dplyr::case_when(adoption_level == "Not adopted" ~ "#F8A27E", 
+                      fill_color = dplyr::case_when(adoption_level == "Not adopted" ~ "#E571B0", 
                                                     adoption_level == "Partial" ~ "#FBDC99",
                                                     adoption_level == "Adopted" ~ "#5BB5D5")) 
       
@@ -216,7 +216,7 @@
             ggplot2::scale_y_discrete(position = "right") +
             ggplot2::labs(x = "Status", y = NULL,
                           # title = "GAPS IN THE 10-10-10 GOALS",
-                          subtitle = glue::glue("<span style = 'font-weight: bold; color:#f47d35'>Not Adopted </span> |
+                          subtitle = glue::glue("<span style = 'font-weight: bold; color:{orchid_bloom}'>Not Adopted </span> |
                                  <span style = 'font-weight: bold;color:#f6af15'>Partially </span> |
                                                 <span style = 'font-weight: bold;color:#2e92b5'>Adopted</span>")) +
                           #subtitle = glue::glue("{unique(df$country)}'s progress towards adopting structural laws/policies towards UNAIDS' 10-10-10 goals"),

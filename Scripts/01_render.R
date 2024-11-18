@@ -33,6 +33,7 @@
   source("Scripts/10-10-10s.R")
   source("Scripts/create_epi_control_summary_table.R")
   source("Scripts/95s_Age_Sex.R")
+  source("Scripts/Create_program_achievement.R")
 
   load_secrets()
 
@@ -46,9 +47,11 @@
   path_fsd <-  si_path() %>% return_latest("Financial")
   path_hrh <-  si_path() %>% return_latest("HRH.*not_redacted.*txt")
   path_dhi <-  si_path() %>% return_latest("DHI.*Detailed")
+  path_psnu <-  si_path() %>%  return_latest("PSNU_IM")
   
   #MSD metadata
   meta <- get_metadata(path_msd)  #extract MSD metadata
+  metapsnu <- get_metadata(path_psnu)
   
   #full country list
   v_countries <- pepfar_country_list %>%
@@ -73,6 +76,9 @@
   df_hrh <- read_psd(path_hrh)
   
   df_dhi <- read_psd(path_dhi)
+  
+  df_psnu_msd <- read_psd(path_psnu) %>% 
+    filter(country %in% v_countries)  
   
   #import UNAIDS Data
   df_unaids  <- load_unaids(pepfar_only = TRUE)
@@ -150,8 +156,25 @@
   
   ## CLEAR 10s data ----
   remove(df_tens, df_tens_viz)  
+
+
+# PROGRAM ACHIEVEMENT -----------------------------------------------------
+
+  ## Program achievement summary ----
+  df_combo <- prep_program_data(df_psnu_msd)
   
+  #test
+  plot_program_acvh(df_combo, metapsnu, cntry = "Zambia", .05)
   
+  #batch
+  walk(v_countries,
+       ~plot_program_acvh(df_combo, metapsnu, .x, 0.05))
+  
+  #check
+  list.files("Images", "program") %>% 
+    str_sub(end = 3) %>% 
+    setdiff(v_iso)
+  remove(df_psnu_msd)
 
 # BUDGET SECTION ----------------------------------------------------------
 

@@ -85,7 +85,7 @@
       ungroup()
     
     df_sys <- df_sys %>%
-      mutate(fill_color = ifelse(funding_agency == "USAID", si_palettes$hunter_t[1], slate),
+      mutate(fill_color = ifelse(funding_agency == "USAID", si_palettes$hunter_t[1], grey20k),
              funding_agency = fct_relevel(funding_agency, "USAID") %>% fct_rev(),
              fill_color = fct_rev(fill_color))
     
