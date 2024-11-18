@@ -51,16 +51,17 @@
   
   #MSD metadata
   meta <- get_metadata(path_msd)  #extract MSD metadata
-  metapsnu <- get_metadata(path_psnu)
   
   #full country list
   v_countries <- pepfar_country_list %>%
-    filter(str_detect(operatingunit, "Region", negate = TRUE)) %>%
+    filter(str_detect(operatingunit, "Region", negate = TRUE), 
+           operatingunit != "Ukraine") %>%
     pull(country)
   
   #full country iso list
   v_iso <- pepfar_country_list %>%
-    filter(str_detect(operatingunit, "Region", negate = TRUE)) %>%
+    filter(str_detect(operatingunit, "Region", negate = TRUE),
+           operatingunit != "Ukraine") %>%
     pull(country_iso)
   
   #country to test for plots
@@ -164,11 +165,11 @@
   df_combo <- prep_program_data(df_psnu_msd)
   
   #test
-  plot_program_achv(df_combo, metapsnu, cntry = "Zambia", .05)
+  plot_program_achv(df_combo, meta, cntry = "Zambia", .05)
   
   #batch
   walk(v_countries,
-       ~plot_program_acvh(df_combo, metapsnu, .x, 0.05))
+       ~plot_program_acvh(df_combo, meta, .x, 0.05))
   
   #check
   list.files("Images", "program") %>% 
