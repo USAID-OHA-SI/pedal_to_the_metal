@@ -52,6 +52,7 @@
     
     df_main <- .data %>%
       filter(indicator %in% c("TX_CURR_Lag2", "TX_PVLS", "TX_CURR", 
+                              "TX_NEW", "TX_CURR_Lag1",
                               "TX_ML_IIT_less_three_mo",
                               "TX_ML_IIT_six_more_mo", 
                               "TX_ML_IIT_three_five_mo"),
@@ -84,8 +85,9 @@
       arrange(country, psnu, psnuuid, type) %>% 
       # Add all three IIT categories together and divide by TX CURR
       rowwise() %>% 
-      mutate(iit = sum(tx_ml_iit_less_three_mo, tx_ml_iit_six_more_mo, tx_ml_iit_three_five_mo, na.rm = T) / tx_curr,
+      mutate(iit = (sum(tx_ml_iit_less_three_mo, tx_ml_iit_six_more_mo, tx_ml_iit_three_five_mo, na.rm = T) / sum(tx_curr_lag1, tx_new, na.rm = T)),
              vlc = tx_pvls_d / tx_curr_lag2) %>% 
+      ungroup() %>% 
       #vls = tx_pvls / tx_pvls_d)
       filter(!is.na(type)) %>%
       select(country, psnu, psnuuid, funding_agency, type, vlc, iit) %>% 
@@ -153,6 +155,7 @@
       filter(indicator %in% c("TX_PVLS", "TX_CURR_Lag2"), 
              standardizeddisaggregate %in% c(kp_vl_disag), 
              fiscal_year == meta$curr_fy,
+             safe_for_vlc == "Y",
              funding_agency %in% c("USAID", "HHS/CDC")) %>% 
       clean_indicator() %>% 
       clean_agency() %>% 
@@ -200,15 +203,14 @@
   #df_kp_prep <- prep_kp_prep(df)
   
   # Total Num PMTCT_EID and OVC_SERV
-  prep_pmtct_ovc <- function(.data){
+  prep_ovc <- function(.data){
     
-    df_pmtct <-  .data %>% 
+    df_ovc <-  .data %>% 
       # filter(country == "Zambia") %>% 
-      filter(indicator %in% c("PMTCT_EID_Less_Equal_Two_Months",  "OVC_SERV_UNDER_18"),
+      filter(indicator %in% c("OVC_SERV_UNDER_18"),
              standardizeddisaggregate == "Total Numerator",
              fiscal_year == meta$curr_fy,
              funding_agency %in% c("USAID", "HHS/CDC")) %>%
-      clean_ind
       clean_agency() %>% 
       group_by(fiscal_year, country, psnu, psnuuid, funding_agency, indicator) %>%
       summarise(across(c(targets, cumulative), ~ sum(.x, na.rm = TRUE)),
@@ -218,26 +220,30 @@
       select(country, psnu, psnuuid, funding_agency, indicator, achievement, type) %>% 
     filter(!is.na(achievement))
     
-    return(df_pmtct)
+    return(df_ovc)
   }
   
   prep_eid <- function(.data){
    
-     df_eid <-  .data %>% 
-      # filter(country == "Zambia") %>% 
-      filter(indicator %in% c("PMTCT_EID_Less_Equal_Two_Months"),
-             standardizeddisaggregate %in% c("Total Numerator", "Total Denominator"),
+    df_eid <-  .data %>% 
+      #filter(country == "Zambia") %>% 
+      clean_indicator() %>% 
+      filter(indicator %in% c("PMTCT_EID_D", "PMTCT_EID_Less_Equal_Two_Months"),
+             standardizeddisaggregate %in% c("Total Numerator", "Total Denominator"), 
              fiscal_year == meta$curr_fy,
-             funding_agency %in% c("USAID", "HHS/CDC")) %>%
-    clean_indicator()
-    clean_agency() %>% 
+             funding_agency %in% c("USAID", "HHS/CDC")
+      ) %>%
+      clean_agency() %>% 
       group_by(fiscal_year, country, psnu, psnuuid, funding_agency, indicator) %>%
-      summarise(across(c(targets, cumulative), ~ sum(.x, na.rm = TRUE)),
-                .groups = "drop") %>% 
-      calc_achievement() %>% 
-      mutate(type = "Total") %>% 
+      summarize(cumulative = sum(cumulative, na.rm = T), .groups = "drop") %>% 
+      pivot_wider(names_from = indicator, 
+                  values_from = cumulative) %>% 
+      mutate(achievement = PMTCT_EID_Less_Equal_Two_Months/PMTCT_EID_D) %>% 
+      mutate(type = "Total", indicator = "PMTCT_EID_Less_Equal_Two_Months") %>% 
       select(country, psnu, psnuuid, funding_agency, indicator, achievement, type) %>% 
       filter(!is.na(achievement))
+    
+  return(df_eid)
     
   }
   
@@ -271,7 +277,7 @@
   
   
   ## Create strip plot ----
-  plot_program_acvh <- function(.data, meta, cntry, jitter_factor, export = T) {
+  plot_program_achv <- function(.data, meta, cntry, jitter_factor, export = T) {
     
     options(warn = -1)
     
@@ -364,17 +370,19 @@
     df_prep_achv    <- prep_prep_achv(.data)
     df_kp_prep      <- prep_kp_prep(.data)
     df_kp_vl        <- prep_kp_vl(.data)
-    df_pmtct        <- prep_pmtct_ovc(.data)
+    df_eid          <- prep_eid(.data)
+    df_ovc          <- prep_ovc(.data)
     
     # move into a list for reducing into a single dataframe
-    grid_dfs <- list(df_iit_vlc_age, df_prep_achv, df_kp_prep, df_kp_vl, df_pmtct)
+    grid_dfs <- list(df_iit_vlc_age, df_prep_achv, df_kp_prep, df_kp_vl, df_eid, df_ovc)
     
     # Create final data frame for return in render script
     df_combo <- reduce(grid_dfs, bind_rows) %>% 
       mutate(type = factor(type, levels = c("Total", "KeyPop", "Peds", "AGYW", "Males (15+)")),
-             indicator = factor(indicator, levels = c("vlc", "PrEP_NEW", "iit", 
-                                                      "OVC_SERV_UNDER_18", 
-                                                      "PMTCT_EID_Less_Equal_Two_Months"))) %>% 
+             indicator = factor(indicator, levels = c("OVC_SERV_UNDER_18",
+                                                      "PrEP_NEW",
+                                                      "PMTCT_EID_Less_Equal_Two_Months",
+                                                      "iit", "vlc"))) %>% 
       custom_jitter()
     
     return(df_combo)

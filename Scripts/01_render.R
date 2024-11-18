@@ -164,7 +164,7 @@
   df_combo <- prep_program_data(df_psnu_msd)
   
   #test
-  plot_program_acvh(df_combo, metapsnu, cntry = "Zambia", .05)
+  plot_program_achv(df_combo, metapsnu, cntry = "Zambia", .05)
   
   #batch
   walk(v_countries,
