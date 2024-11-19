@@ -46,8 +46,8 @@ ref_id <- "030cc546"
     distinct() %>% ungroup() %>% 
     mutate(year = as.numeric(str_extract(source, "[1][6-9][0-9]{2}|20[0-2][0-9]")),
            outcome_yn = str_extract(outcome, "^[Y,N]"),
-                value = case_when(outcome_yn == "Y" ~ 10.001,
-                                  outcome_yn == "N" ~ -10),
+                value = case_when(outcome_yn == "Y" ~ 20.001,
+                                  outcome_yn == "N" ~ 9.999),
            indicator_inverted = case_when(
              str_detect(indicator, "HIV") ~ "HIV exposure non-criminalization",
              str_detect(indicator, "sex work") ~ "Sex work non-criminalization",
@@ -57,19 +57,20 @@ ref_id <- "030cc546"
              ),
            outcome_inverted = case_when(outcome_yn == "Y" ~ "No",
                                         outcome_yn == "N" ~ "Yes"),
-           outcome_explanation = str_extract(outcome, "(?<=^Yes[,]?\\s|^No[,]?\\s).+$")
+           outcome_explanation = str_extract(outcome, "(?<=^Yes[,]?\\s|^No[,]?\\s).+$"),
            ) %>% 
     select(-country_code, -region_unaids, -indicator, -outcome, -outcome_yn ) %>% 
     rename(country = country_name) %>% 
     group_by(country, indicator_inverted) %>% 
-    mutate(most_recent_year = max(year)) %>% 
+    mutate(most_recent_year = max(year),
+           ) %>% 
     ungroup() %>% 
     filter(year==most_recent_year) %>%
     # duplicates remain. Need to choose the most recent, most truthful, or most detailed. This was my best guess
     select(-most_recent_year) %>% 
     mutate(ten = "first",
            outcome_label = if_else(outcome_inverted=="Yes", "Adopted", "Not Adopted"),
-           outcome_label_value = if_else(outcome_inverted=="Yes", -5, 5)) %>% 
+           outcome_label_value = if_else(outcome_inverted=="Yes", 5, 15)) %>% 
     rename(indicator = indicator_inverted,
            outcome = outcome_inverted) %>% 
         print(n=120)
@@ -136,45 +137,58 @@ ref_id <- "030cc546"
       mutate(reaction = if_else(value > 10, "highlight", "celebrate")) %>% 
       select(-source) %>% 
       distinct() %>% 
-      mutate(indicator = factor(indicator, levels = order))
+      mutate(indicator = factor(indicator, levels = order),
+             country = dplyr::recode(country,
+                                     "Côte d'Ivoire" = "Cote d'Ivoire",
+                                     "Tanzania (United Republic of)" = "Tanzania",
+                                     "Viet Nam" = "Vietnam"     ),
+             )
 
   tens %>% count(indicator) %>% print(n=790)
 
     
-# VISUALIZE -------------------------------------------------------------------
-    tens %>% 
-      filter(country=="Malawi") %>% 
+  # Functionalize -------------------------------------------------------------------
+
+  barplot_viz_tens <- function(df, cntry, export=TRUE) {
+    
+    df <- df %>%
+      filter(country==cntry)
+    
+
+    # if(is.null(df) || nrow(df) == 0)
+    #   return(dummy_plot(q))
+
+    viz <- df %>% 
       ggplot(aes(y=indicator)) +
       geom_col(aes(x=value, fill = reaction)) +
       geom_text(aes(x=outcome_label_value, label=outcome_label))+
+      scale_x_continuous(limits = c(0,50))+
       theme_minimal() +
-        theme(axis.title.y = element_blank(),
-              panel.grid = element_blank(),
-              legend.position = "none",
-              plot.title.position = "plot",      # Position the title over the axis
-              plot.subtitle.position = "plot"
-        ) +
-        scale_fill_manual(values = c("highlight" = old_rose, "celebrate" = viking)) +  
-     geom_vline(xintercept=10, 
-                  color = glitr::grey70k, linewidth = 1, linetype = "dashed"
-                ) +   
-    labs(x =  "Percent (from 100)",
-         # caption = "estimates may not be current",
-         title = "10-10-10 indicator goal status and/or values",
-         subtitle = "Meeting these goals will require fewer than 10% of each named group experiences stigma & descrimination or physical & sexual violence")
+      theme(axis.title.y = element_blank(),
+            panel.grid = element_blank(),
+            legend.position = "none",
+            plot.title.position = "plot",      # Position the title over the axis
+            plot.subtitle.position = "plot"
+      ) +
+      scale_fill_manual(values = c("highlight" = orchid_bloom, "celebrate" = hunter)) +
+      geom_vline(xintercept=10,
+                 color = glitr::grey70k, linewidth = 1, linetype = "dashed") +
+      labs(x =  "Percent (from 100)",
+           # caption = "estimates may not be current",
+           title = glue::glue("10-10-10 indicators in {df$country}"),
+           subtitle = "Meeting these goals will require fewer than 10% of each named group experiences stigma & descrimination or physical & sexual violence")
+    
+    
+    return(viz)
+  }  
 
+  #test function -------------------------------------------
+  barplot_viz_tens(df = tens, cntry = "Malawi")
+  
+  #iterate ------------------------------------------------
+  country_list <- glamr::pepfar_country_list %>% 
+    pull(country)
+  
 
-    # gbv_structured %>%
-    #   filter(country=="Cameroon") %>% 
-    #   ggplot(aes(y=indicator)) + 
-    #     geom_col(aes(x=values_recent, fill = most_recent_year)) + 
-    #     geom_vline(xintercept=10, 
-    #                color = glitr::orchid_bloom,linewidth = 3
-    #                 ) +
-    #   theme_minimal() +
-    #   theme(axis.title = element_blank(), 
-    #         panel.grid.major.y = element_blank(),
-    #         ) +
-    #   scale_fill_manual(values = c("TRUE" = grey70k, "FALSE" = grey20k)) 
-    # 
-  # EXPORT -------------------------------------------------------------------
+  map(.x=country_list, ~ barplot_viz_tens(df = tens, cntry = .x))
+
