@@ -61,6 +61,7 @@
                   mutate(funding_agency = "PEPFAR")) %>% 
       clean_agency() %>% 
       filter(fiscal_year == max(fiscal_year),
+             dhi_approval_workflow_status == "Confirmed",
              dhi_question_code == "estimated_budget") %>% 
       mutate(estimated_budget = as.numeric(response_option_desc)) %>% 
       group_by(fiscal_year, country, funding_agency) %>% 
@@ -155,7 +156,8 @@
     df_sys_cat <- df %>% 
       clean_agency() %>% 
       filter(fiscal_year == max(fiscal_year),
-             dhi_question_code == "estimated_budget") %>% 
+             dhi_question_code == "estimated_budget",
+             dhi_approval_workflow_status == "Confirmed") %>% 
       mutate(estimated_budget = as.numeric(response_option_desc)) %>% 
       mutate(primary_system_category = ifelse(str_detect(primary_system_category, "\\)$"),
                                               str_extract(primary_system_category, "(?<=\\().*(?=\\))"),
