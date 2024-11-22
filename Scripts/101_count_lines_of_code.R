@@ -80,7 +80,7 @@ count_lines_local_repo <- function(repo_path = ".",
 
 # Example Usage
 # Set the repository path to the current working directory
-repo_path <- "."  
+repo_path <- "./Scripts/"  
 
 # Call the function
 line_counts_df <- count_lines_local_repo(repo_path)
