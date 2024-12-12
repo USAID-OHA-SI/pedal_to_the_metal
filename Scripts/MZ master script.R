@@ -363,30 +363,30 @@ global_1 <- global %>%
 
 # first pass to make COP only docs ----------------
 # cut them all to COP ous
-  budget_cop <- budget_table %>%
-    filter(country %in% cop_ous)
+#  budget_cop <- budget_table %>%
+#    filter(country %in% cop_ous)
   
-  results_cop <- usaid_totals_2 %>%
-    filter(operatingunit %in% cop_ous) %>%
-    rename(country = operatingunit)
+#  results_cop <- usaid_totals_2 %>%
+#    filter(operatingunit %in% cop_ous) %>%
+#    rename(country = operatingunit)
   
-  unaids_cop <- unaids_table %>%
-    left_join(pepfar_short, by = c("iso" = "country_iso")) %>%
-    filter(country %in% cop_ous) %>%
-    select(!c(iso, operatingunit_iso))
+#  unaids_cop <- unaids_table %>%
+#    left_join(pepfar_short, by = c("iso" = "country_iso")) %>%
+#    filter(country %in% cop_ous) %>%
+#    select(!c(iso, operatingunit_iso))
   
-  sus_cop <- sus1 %>%
-    filter(country %in% cop_ous) %>%
-    select(!c(operatingunit_iso))
+#  sus_cop <- sus1 %>%
+#    filter(country %in% cop_ous) %>%
+#    select(!c(operatingunit_iso))
   
  # combine 
-  df <- budget_cop %>%
-    full_join(results_cop) %>%
-    full_join(unaids_cop) %>%
-    full_join(sus_cop)
+#  df <- budget_cop %>%
+#    full_join(results_cop) %>%
+#    full_join(unaids_cop) %>%
+#    full_join(sus_cop)
 
-  df <- df %>%
-    select(country, country_iso, everything())
+ # df <- df %>%
+#    select(country, country_iso, everything())
 
 # Second pass to make all countries ---------
   
