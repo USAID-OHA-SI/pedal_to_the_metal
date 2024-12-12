@@ -28,6 +28,7 @@
 
 
   pepfar <- pepfar_country_list
+  
   pepfar_short <- pepfar %>%
     select(operatingunit_iso, country, country_iso)
   
@@ -85,8 +86,8 @@ gov_raw <- read_sheet(gov_url)
     filter(fiscal_year == 2024)
   
   fin_FY23 <- fin_FY23 %>%
-    mutate(fundingagency2 = case_when(str_detect(fundingagency, "USAID") ~ "USAID",
-                                      TRUE ~ fundingagency))
+    mutate(fundingagency2 = case_when(str_detect(funding_agency, "USAID") ~ "USAID",
+                                      TRUE ~ funding_agency))
   
   ## find Above site programming cost ------
   
@@ -116,8 +117,8 @@ gov_raw <- read_sheet(gov_url)
   ## find DREAMS data with comprehensive dataset ----------
   
   comp <- comp_raw %>%
-    mutate(fundingagency2 = case_when(str_detect(fundingagency, "USAID") ~ "USAID",
-                                      TRUE ~ fundingagency))
+    mutate(fundingagency2 = case_when(str_detect(funding_agency, "USAID") ~ "USAID",
+                                      TRUE ~ funding_agency))
   
   comp_dreams <- comp %>%
     filter(initiative_name == "DREAMS",
@@ -177,12 +178,12 @@ global_1 <- global %>%
     select(operatingunit, country, indicator, funding_agency, standardizeddisaggregate, cumulative)
   
   agency_totals <- global_1 %>%
-    group_by(operatingunit, indicator, funding_agency) %>%
+    group_by(country, indicator, funding_agency) %>%
     summarise(ind_c = sum(cumulative, na.rm = T)) # confirm this is right with the "Dedup" category - does it subtract?
   
   agency_totals_2 <- agency_totals %>%
     ungroup() %>%
-    group_by(operatingunit, indicator) %>%
+    group_by(country, indicator) %>%
     mutate(sh = round((ind_c / sum(ind_c, na.rm = TRUE)) * 100, 0))
   
   # filter to USAID and make table
@@ -306,7 +307,7 @@ global_1 <- global %>%
   
   nurses_2 <- nurses %>%
     group_by(country) %>%
-    filter(Year == max(Year)) %>%
+    filter(!is.na(nurses) & Year == max(Year[!is.na(nurses)])) %>%
     ungroup() %>%
     mutate(nurses = round(nurses, 0))
   
@@ -360,6 +361,7 @@ global_1 <- global %>%
   
 # JOIN all into mega table and cut down to COP countries -------
 
+# first pass to make COP only docs ----------------
 # cut them all to COP ous
   budget_cop <- budget_table %>%
     filter(country %in% cop_ous)
@@ -385,3 +387,29 @@ global_1 <- global %>%
 
   df <- df %>%
     select(country, country_iso, everything())
+
+# Second pass to make all countries ---------
+  
+  budget_table <- budget_table %>%
+    filter(country %ni% c("Asia Region (pre-FY24)", "West Africa Region (pre-FY24)", 
+                          "Western Hemisphere Region (pre-FY24)"))
+  
+  results <- usaid_totals_2 %>%
+    filter()
+  
+  unaids <- unaids_table %>%
+    left_join(pepfar_short, by = c("iso" = "country_iso")) %>%
+    select(!c(iso, operatingunit_iso))
+  
+  sus <- sus1
+  
+  # combine 
+  df <- budget_table %>%
+    full_join(results) %>%
+    full_join(unaids) %>%
+    full_join(sus)
+  
+  df <- df %>%
+    select(country, country_iso, everything()) %>%
+    filter(country %ni% c("Brazil", "Peru", "Trinidad and Tobago"))
+  
