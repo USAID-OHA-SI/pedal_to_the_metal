@@ -1,47 +1,44 @@
 # PROJECT:  C:/Users/tessam/Documents/Github/pedal_to_the_metal
 # PURPOSE:  Create programmatic evaluation summary based on 0-1 achievements
 # AUTHOR:   T. Essam | USAID
-# REF ID:   f73560ca 
+# REF ID:   f73560ca
 # LICENSE:  MIT
 # DATE:     2024-11-17
 # UPDATED:  derived from create_programmatic_eval.r
 
 # DEPENDENCIES ------------------------------------------------------------
-    
-  # #general
-  # library(tidyverse)
-  # library(glue)
-  # #oha
-  # library(gagglr) ##install.packages('gagglr', repos = c('https://usaid-oha-si.r-universe.dev', 'https://cloud.r-project.org'))
-  # #viz extensions
-  # library(scales, warn.conflicts = FALSE)
-  # library(systemfonts)
-  # library(tidytext)
-  # library(patchwork)
-  # library(ggtext)
+
+  #general
+  library(tidyverse)
+  library(glue)
+  #oha
+  library(gagglr) ##install.packages('gagglr', repos = c('https://usaid-oha-si.r-universe.dev', 'https://cloud.r-project.org'))
+  #viz extensions
+  library(scales, warn.conflicts = FALSE)
+  library(systemfonts)
+  library(tidytext)
+  library(patchwork)
+  library(ggtext)
 
 # GLOBAL VARIABLES --------------------------------------------------------
 
-  #ref_id <- "f1a0e12f"  #a reference to be places in viz captions 
+  ref_id <- "f1a0e12f"  #a reference to be places in viz captions
   
-  # path_msd <- si_path() %>% return_latest("PSNU_IM")
+  #path_msd <- si_path() %>% return_latest("PSNU_IM")
   #path_genie <- si_path() %>% return_latest("PSNUByIMs-Global")
-  
-  #meta <- get_metadata(path_msd)
-  # 
-  # cntry <- "Zambia"
+  meta <- get_metadata("C:\\Users\\atowey\\Downloads\\MER_Structured_Datasets_PSNU_IM_FY22-25_20240913_v2_1.zip")
+  cntry <- "Zambia"
 
 # IMPORT ------------------------------------------------------------------
+  #df <- read_psd(path_msd)
+  df <- read_psd("C:\\Users\\atowey\\Downloads\\MER_Structured_Datasets_PSNU_IM_FY22-25_20240913_v2_1.zip")
+  # Pull the list of OUs for which visuals need to be generated
+  cop_ous <- glamr::pepfar_country_list %>%
+    filter(str_detect(operatingunit, "Region", negate = T)) %>%
+    pull(operatingunit)
 
-  # df <- read_psd(path_msd)
-  # 
-  # # Pull the list of OUs for which visuals need to be generated
-  # cop_ous <- glamr::pepfar_country_list %>% 
-  #   filter(str_detect(operatingunit, "Region", negate = T)) %>% 
-  #   pull(operatingunit)
-  # 
-  # df <- df %>%
-  #   filter(country %in% cop_ous)
+  df <- df %>%
+    filter(country %in% cop_ous)
     
 
 # MUNGE FUNCTIONS -------------------------------------------------------------------
@@ -277,7 +274,7 @@
   
   
   ## Create strip plot ----
-  plot_program_achv <- function(.data, meta, cntry, jitter_factor, export = T) {
+  plot_program_achv_other <- function(.data, meta, cntry, jitter_factor, export = T) {
     
     options(warn = -1)
     
@@ -295,7 +292,7 @@
       mutate(
         funding_agency = factor(funding_agency, levels = c("USAID", "CDC")),
         indicator = recode(indicator, "vlc" = "VLC", "iit" = "IIT", 
-                           "PMTCT_EID_Less_Equal_Two_Months" = "EID_COV\n<3 mo", 
+                           "PMTCT_EID_Less_Equal_Two_Months" = "EID_COV\n<=2 mo", 
                            "OVC_SERV_UNDER_18" = "OVC_SERV\n< 18") # For display purposes
       ) 
     
@@ -341,7 +338,78 @@
     
     
     if(export)
-      save_png(cntry, "program", scale = 1.25, height = 3.5, width = 8.22)
+      #save_png(cntry, "program", scale = 1.25, height = 3.5, width = 8.22)
+    
+    return(p)
+    
+  }
+  
+  ## Create strip plot ----
+  plot_program_achv_iit <- function(.data, meta, cntry, jitter_factor, export = T) {
+    
+    options(warn = -1)
+    
+    # Set axis points
+    baseline_pt_1 <- 0
+    baseline_pt_2 <- .25
+    baseline_pt_3 <- .5
+    baseline_pt_4 <- .75
+    baseline_pt_5 <- 1
+    
+    df <- .data %>%
+      filter(country == cntry) %>% 
+      # Adjust df for plot
+      custom_jitter(0.05) %>%
+      mutate(
+        funding_agency = factor(funding_agency, levels = c("USAID", "CDC")),
+        indicator = recode(indicator, "vlc" = "VLC", "iit" = "IIT", 
+                           "PMTCT_EID_Less_Equal_Two_Months" = "EID_COV\n<=2 mo", 
+                           "OVC_SERV_UNDER_18" = "OVC_SERV\n< 18") # For display purposes
+      ) 
+    
+    p <- df %>% 
+      # Plot setup
+      ggplot(aes(achievement, y_jitter, color = funding_agency)) +
+      geom_blank(aes(y = -y_jitter)) +
+      geom_point(na.rm = TRUE, alpha = .5, size = 2) + # Adjust size as needed
+      scale_color_manual(values = c("USAID" = hunter, "CDC" = slate),
+                         name = "Funding Agency") +
+      facet_grid(rows = vars(indicator), cols = vars(type), scales = "free", switch = "y") +
+      theme(strip.text = element_markdown()) +
+      scale_x_continuous(
+        limits = c(0, .1),
+        breaks = c(0, 0.05, .1),
+        labels = c("0%", "5%", "10%"),
+        oob = scales::squish
+      ) +
+      
+      # Line range with ticks
+      geom_linerange(aes(xmin = 0, xmax = 1.1, y = 0), color = "#D3D3D3") +
+      geom_point(aes(x = baseline_pt_1, y = 0), shape = 3, color = "#D3D3D3") +
+      geom_point(aes(x = baseline_pt_2, y = 0), shape = 3, color = "#D3D3D3") +
+      geom_point(aes(x = baseline_pt_3, y = 0), shape = 3, color = "#D3D3D3") +
+      geom_point(aes(x = baseline_pt_4, y = 0), shape = 3, color = "#D3D3D3") +
+      geom_point(aes(x = baseline_pt_5, y = 0), shape = 3, color = "#D3D3D3") +
+      
+      #Formatting
+      si_style_nolines() +
+      theme(strip.text.y.left = element_text(angle = 0, vjust = 0.5, hjust = 1),
+            axis.text.x = element_markdown(),
+            axis.text.y = element_blank(),
+            title = element_blank(),
+            panel.spacing.y = unit(1, "lines"),
+            strip.placement = "outside",
+            strip.text.x = element_text(color="#00000000", face = "bold", hjust = 0.5),
+            strip.text.y = element_text(face = "bold", hjust = 0.5),
+            plot.margin = unit(c(0,0,0,0), "in"),
+            legend.position = "none") +
+      coord_cartesian(clip = "off") +
+      labs(x = NULL, y = NULL) +
+      guides(size = "none", shape = guide_legend())  
+    
+    
+    if(export)
+      #save_png(cntry, "program", scale = 1.25, height = 3.5, width = 8.22)
     
     return(p)
     
@@ -390,12 +458,31 @@
   }
   
 
-
+  df_combo <- prep_program_data(df)
   
-  #plot_program_acvh(df_combo, meta, cntry = "Zambia", .05)
+  plot_program_achv(df_combo, meta, cntry = "Zambia", .05)
   
   #walk(v_countries, 
   #     .f = ~ plot_program_acvh(df_combo, meta, cntry = .x, jitter_factor = 0.05))
+  
+
+  # Split data into IIT and non-IIT
+  df_iit <- df_combo %>% filter(indicator == "iit")
+  df_other <- df_combo %>% filter(indicator != "iit")
+  
+  plot_program_achv_other(df_other, meta, cntry = "Zambia", .05)
+  plot_program_achv_iit(df_iit, meta, cntry = "Zambia", .05)
+  
+  
+  # Create the two plots
+  plot_other <- plot_program_achv_other(df_other, meta, cntry = "Zambia", .05)
+  plot_iit <- plot_program_achv_iit(df_iit, meta, cntry = "Zambia", .05)
+  
+  # Combine them with patchwork
+  combined_plot <- plot_other / plot_iit + plot_layout(heights = c(4, 1))
+  
+  # Display the combined plot
+  print(combined_plot)
   
   
 
