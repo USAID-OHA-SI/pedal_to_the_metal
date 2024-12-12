@@ -471,7 +471,7 @@
   df_other <- df_combo %>% filter(indicator != "iit")
   
   country_select = "South Africa"
-  # Create the blank row with the specified columns
+  # Create the blank row with the specified columns (may need to update!)
   blank_row <- data.frame(
     country = country_select,
     psnu = NA,
@@ -481,7 +481,7 @@
     achievement = NA,
     type = "KeyPop",
     y_jitter = NA,
-    stringsAsFactors = FALSE  # Avoid factors if using an older version of R
+    stringsAsFactors = FALSE
   )
   
   iit_with_blank_row <- rbind(df_iit, blank_row)
