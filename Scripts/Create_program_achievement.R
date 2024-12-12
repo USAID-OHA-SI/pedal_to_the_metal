@@ -466,22 +466,31 @@
   #     .f = ~ plot_program_acvh(df_combo, meta, cntry = .x, jitter_factor = 0.05))
   
 
-  # Split data into IIT and non-IIT
+  # Split data into IIT and non-IIT and plot
   df_iit <- df_combo %>% filter(indicator == "iit")
   df_other <- df_combo %>% filter(indicator != "iit")
   
-  plot_program_achv_other(df_other, meta, cntry = "Zambia", .05)
-  plot_program_achv_iit(df_iit, meta, cntry = "Zambia", .05)
+  country_select = "South Africa"
+  # Create the blank row with the specified columns
+  blank_row <- data.frame(
+    country = country_select,
+    psnu = NA,
+    psnuuid = NA,
+    funding_agency = NA,
+    indicator = "iit",  # Set the indicator value to 'iit'
+    achievement = NA,
+    type = "KeyPop",
+    y_jitter = NA,
+    stringsAsFactors = FALSE  # Avoid factors if using an older version of R
+  )
   
+  iit_with_blank_row <- rbind(df_iit, blank_row)
   
-  # Create the two plots
-  plot_other <- plot_program_achv_other(df_other, meta, cntry = "Zambia", .05)
-  plot_iit <- plot_program_achv_iit(df_iit, meta, cntry = "Zambia", .05)
+  plot_other <- plot_program_achv_other(df_other, meta, cntry = country_select, .05)
+  plot_iit <- plot_program_achv_iit(iit_with_blank_row, meta, cntry = country_select, .05)
   
-  # Combine them with patchwork
   combined_plot <- plot_other / plot_iit + plot_layout(heights = c(4, 1))
   
-  # Display the combined plot
   print(combined_plot)
   
   
