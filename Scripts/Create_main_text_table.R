@@ -32,8 +32,8 @@
     select(operatingunit_iso, country, country_iso)
   
   cop_ous <- glamr::pepfar_country_list %>% 
-    filter(str_detect(operatingunit, "Region", negate = T)) %>% 
-    pull(operatingunit)
+    filter(country != "Ukraine") %>% 
+    pull(country)
   
   cop_ou_iso <- pepfar_short 
   
