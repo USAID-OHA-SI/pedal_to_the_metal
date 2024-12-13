@@ -335,7 +335,6 @@
       guides(size = "none", shape = guide_legend())  
     
     return(p)
-    
   }
   
   plot_program_achv_iit <- function(.data, meta, cntry, jitter_factor = 0.05, missing_types) {
@@ -446,59 +445,64 @@
   
 # PLOT ----------------------------------------------------------------------
   
-  #Prep the data
-  df_combo <- prep_program_data(df)
-  
-  #Choose the country
-  country_select = "South Africa"
-  
-  # Split data into IIT and non-IIT and plot
-  df_iit <- df_combo %>% filter(indicator == "iit", country==country_select)
-  df_other <- df_combo %>% filter(indicator != "iit", country==country_select)
-  
-  # See what populations the country has data for
-  required_types <- unique(df_other$type)
-  count_indicators <- length(unique(df_other$indicator))
-  # Make sure there is an IIT column facet (for spacing purposes) for each population that has data
-  missing_types <- setdiff(required_types, df_iit$type)
-  
-  # If there are missing types in the IIT df, create blank rows and append them to df_iit
-  if (length(missing_types) > 0) {
-    blank_rows <- lapply(missing_types, function(type) {
-      data.frame(
-        country = country_select,
-        psnu = NA,
-        psnuuid = NA,
-        funding_agency = NA,
-        indicator = "iit",  # Set the indicator value to 'iit'
-        achievement = NA,
-        type = type,        # Use the missing type
-        y_jitter = NA,
-        stringsAsFactors = FALSE
-      )
-    })
+  plot_program <- function(df, meta, country_select) {
+    # Prepare the data
+    df_combo <- prep_program_data(df)
     
-    # Combine all of the blank rows into a single dataframe
-    blank_rows_df <- do.call(rbind, blank_rows)
+    # Filter data for the selected country
+    df_iit <- df_combo %>% filter(indicator == "iit", country == country_select)
+    df_other <- df_combo %>% filter(indicator != "iit", country == country_select)
     
-    # Append the blank rows to the original dataframe
-    df_iit <- rbind(df_iit, blank_rows_df)
+    # Identify populations the country has data for
+    required_types <- unique(df_other$type)
+    count_indicators <- length(unique(df_other$indicator))
+    
+    # Check for missing types in IIT data
+    missing_types <- setdiff(required_types, df_iit$type)
+    
+    # Add blank rows for missing types in the IIT data
+    if (length(missing_types) > 0) {
+      blank_rows <- lapply(missing_types, function(type) {
+        data.frame(
+          country = country_select,
+          psnu = NA,
+          psnuuid = NA,
+          funding_agency = NA,
+          indicator = "iit",  # Set the indicator value to 'iit'
+          achievement = NA,
+          type = type,        # Use the missing type
+          y_jitter = NA,
+          stringsAsFactors = FALSE
+        )
+      })
+      
+      # Combine all blank rows into a single dataframe
+      blank_rows_df <- do.call(rbind, blank_rows)
+      
+      # Append blank rows to the original dataframe
+      df_iit <- rbind(df_iit, blank_rows_df)
+    }
+    
+    # Plot other indicators
+    plot_other <- plot_program_achv_other(df_other, meta, cntry = country_select, jitter_factor = 0.05)
+    
+    # Plot IIT
+    plot_iit <- plot_program_achv_iit(df_iit, meta, cntry = country_select, jitter_factor = 0.05, missing_types = missing_types)
+    
+    # Combine the plots
+    combined_plot <- plot_other / plot_iit + plot_layout(heights = c(count_indicators, 1))
+    
+    # Print the combined plot
+    print(combined_plot)
+    
+    return(combined_plot)
   }
   
-  # Plot the other indicators
-  plot_other <- plot_program_achv_other(df_other, meta, cntry = country_select, .05)
-  # Plot IIT
-  plot_iit <- plot_program_achv_iit(df_iit, meta, cntry = country_select, .05, missing_types = missing_types2)
-  # Combine
-  combined_plot <- plot_other / plot_iit + plot_layout(heights = c(count_indicators, 1))
-  #Print it out
-  print(combined_plot)
+  plot_program(df, meta, "Tanzania")
+  
   #walk(v_countries, 
   #     .f = ~ plot_program_acvh(df_combo, meta, cntry = .x, jitter_factor = 0.05))
   
-
-# # EXPORT ----------------------------------------------------------------
-
 
   ##### TO DO ##############
   # geom_blank / theme_void if we are missing all data or some data
