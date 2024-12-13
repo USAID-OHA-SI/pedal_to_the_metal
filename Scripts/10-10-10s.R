@@ -3,7 +3,7 @@
 # AUTHOR:  Lemlem Baraki | SI
 # REF ID:  1b6b1dd7
 # LICENSE: MIT
-# DATE:   2024-11-01
+# DATE:   2024-12-13
 # NOTES: adapted from https://github.com/USAID-OHA-SI/hardapoart/blob/main/Scripts/16_10s_barriers.R
 
 # LOCALS & SETUP ============================================================================
@@ -37,9 +37,10 @@
   #   ref_id <- "1b6b1dd7"
     
   # Functions  
-    # cop_ous <- glamr::pepfar_country_list %>% 
-    #   filter(str_detect(operatingunit, "Region", negate = T)) %>% 
-    #   pull(operatingunit)
+     #cop_ous <- glamr::pepfar_country_list %>% 
+       #filter(country !="Ukraine") %>% 
+     #filter(str_detect(operatingunit, "Region", negate = T)) %>% 
+      # pull(country)
 
 # LOAD DATA ============================================================================  
 
@@ -106,7 +107,9 @@
         dplyr::mutate(country = dplyr::recode(country,
                                               "Côte d'Ivoire" = "Cote d'Ivoire",
                                               "Tanzania (United Republic of)" = "Tanzania",
-                                              "Viet Nam" = "Vietnam"
+                                              "Viet Nam" = "Vietnam", 
+                                              "Lao People's Democratic Republic" = "Laos", #add ROP country names 
+                                              "Myanmar" = "Burma"
                       )) %>% 
         dplyr::filter(country %in% glamr::pepfar_country_list$country)
       
@@ -116,11 +119,27 @@
         dplyr::count(country, adoption_level, indicator_name) #%>% 
         #dplyr::filter(!is.na(adoption_level))
       
+      #identify missing countries 
+      missing_countries <- setdiff(glamr::pepfar_country_list$country, unique(df_viz$country))
+      
+      #create rows for missing countries 
+      missing_rows <- expand_grid(
+        country = missing_countries,
+        indicator_name = unique(df_struct$indicator_name)
+        ) %>% 
+        mutate(n = NA,
+               #indicator_order = NA_real_, 
+               fill_color = NA_character_)
+      
+      #add in missing combos 
+      df_viz <- dplyr::bind_rows(df_viz, missing_rows) 
+        
       # add viz components
       df_viz <- df_viz %>% 
         dplyr::mutate(adoption_level = factor(adoption_level, c("Adopted", "Partial", "Not adopted")),
                       indicator_order = dplyr::case_when(adoption_level == "Not adopted" ~ 3,
                                                          adoption_level == "Partial" ~ 2, 
+                                                         #adoption_level == "Adopted" ~ 1,
                                                          TRUE ~ 1),
                       fill_color = dplyr::case_when(adoption_level == "Not adopted" ~ "#E571B0", 
                                                     adoption_level == "Partial" ~ "#FBDC99",
