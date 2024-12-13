@@ -47,21 +47,21 @@
   path_fsd <-  si_path() %>% return_latest("Financial")
   path_hrh <-  si_path() %>% return_latest("HRH.*not_redacted.*txt")
   path_dhi <-  si_path() %>% return_latest("DHI.*Detailed")
-  path_psnu <-  si_path() %>%  return_latest("PSNU_IM")
+  path_psnu <-  si_path() %>%  return_latest("PSNU_IM_FY22-25_20240913_v2_1.zip")
   
   #MSD metadata
   meta <- get_metadata(path_msd)  #extract MSD metadata
   
+  exclude_list <- c("Ukraine", "Brazil", "Peru", "T&T")
+  
   #full country list
   v_countries <- pepfar_country_list %>%
-    filter(str_detect(operatingunit, "Region", negate = TRUE), 
-           operatingunit != "Ukraine") %>%
+    filter(operatingunit %ni% exclude_list) %>%
     pull(country)
   
   #full country iso list
   v_iso <- pepfar_country_list %>%
-    filter(str_detect(operatingunit, "Region", negate = TRUE),
-           operatingunit != "Ukraine") %>%
+    filter(operatingunit %ni% exclude_list) %>%
     pull(country_iso)
   
   #country to test for plots
@@ -144,11 +144,11 @@
   df_tens <- load_tens()
   
   df_tens_viz <- prep_10s_barriers(df_tens)
-  dotplot_viz_10s(df_tens_viz, "Zambia")
+  dotplot_viz_10s(df_tens_viz, "Philippines")
   
   #iterate
   walk(v_countries,
-       ~dotplot_viz_10s(df_tens_viz, .x))
+       safely(~dotplot_viz_10s(df_tens_viz, .x)))
   
   #check
   list.files("Images", "kp-policy") %>% 
@@ -165,11 +165,11 @@
   df_combo <- prep_program_data(df_psnu_msd)
   
   #test
-  plot_program_achv(df_combo, meta, cntry = "Zambia", .05)
+  plot_program_achv(df_combo, meta, cntry = "Cambodia", .05)
   
   #batch
   walk(v_countries,
-       ~plot_program_acvh(df_combo, meta, .x, 0.05))
+       safely(~plot_program_acvh(df_combo, meta, .x, 0.05)))
   
   #check
   list.files("Images", "program") %>% 
@@ -336,7 +336,7 @@
     }
   )
 
-write_csv(df_final_output, "Images/hiv_data_briefer_table.csv", na = "-")  
+write_csv(df_final_output, "Images/hiv_data_briefer_table_round2.csv", na = "-")  
 
 
   
