@@ -223,7 +223,6 @@
   prep_eid <- function(.data){
    
     df_eid <-  .data %>% 
-      #filter(country == "Zambia") %>% 
       clean_indicator() %>% 
       filter(indicator %in% c("PMTCT_EID_D", "PMTCT_EID_Less_Equal_Two_Months"),
              standardizeddisaggregate %in% c("Total Numerator", "Total Denominator"), 
@@ -246,11 +245,6 @@
   
   
   
-  #prep_pmtct_ovc(df)
-  
-
-  
-  
   # PLOT FUNCTIONS ----------------------------------------------------------
 
   ## Custom Jittering ----
@@ -261,135 +255,141 @@
     .data %>%
       group_by(indicator, type) %>%  # Group by indicator to normalize each indicator separately
       mutate(
-        # Jitter for visualization
         y_jitter = case_when(
           funding_agency == "USAID" ~ runif(n(), .01, jitter_factor), # Could adjust these values as needed
           funding_agency == "CDC" ~ runif(n(), -jitter_factor, -.01),
           TRUE ~ 0
         )
       ) %>%
-      ungroup()  # Remove grouping after mutation
+      ungroup()
   }
   
   
-  
   ## Create strip plot ----
-  plot_program_achv_other <- function(.data, meta, cntry, jitter_factor, export = T) {
-    
+  plot_program_achv_other <- function(.data, meta, cntry, jitter_factor) {
     options(warn = -1)
     
-    # Set axis points
-    baseline_pt_1 <- 0
-    baseline_pt_2 <- .25
-    baseline_pt_3 <- .5
-    baseline_pt_4 <- .75
-    baseline_pt_5 <- 1
+    # Set axis points on 25s
+    baseline_pts <- c(0, .25, .5, .75, 1)
     
+    # Organize and name columns and rows
     df <- .data %>%
       filter(country == cntry) %>% 
-      # Adjust df for plot
-      custom_jitter(0.05) %>%
+      custom_jitter(0.05) %>% # Apply jitter
       mutate(
         funding_agency = factor(funding_agency, levels = c("USAID", "CDC")),
-        indicator = recode(indicator, "vlc" = "VLC", "iit" = "IIT", 
+        indicator = recode(indicator,# Rename
+                           "PrEP_NEW" = "PrEP_NEW\nresults : target",
+                           "vlc" = "VLC", 
                            "PMTCT_EID_Less_Equal_Two_Months" = "EID_COV\n<=2 mo", 
-                           "OVC_SERV_UNDER_18" = "OVC_SERV\n< 18") # For display purposes
-      ) 
+                           "OVC_SERV_UNDER_18" = "OVC_SERV\n< 18\nresults : target")
+      ) %>%
+      mutate(
+        indicator = factor(indicator, # Reorder
+                           levels = c("VLC", 
+                                      "PrEP_NEW\nresults : target", 
+                                      "OVC_SERV\n< 18\nresults : target", 
+                                      "EID_COV\n<=2 mo"))
+      )
+    
+    # TO DO: If data are completely missing then make blank (theme_void)
     
     p <- df %>% 
-      # Plot setup
+      #Plot points
       ggplot(aes(achievement, y_jitter, color = funding_agency)) +
       geom_blank(aes(y = -y_jitter)) +
       geom_point(na.rm = TRUE, alpha = .5, size = 2) + # Adjust size as needed
       scale_color_manual(values = c("USAID" = hunter, "CDC" = slate),
                          name = "Funding Agency") +
-      facet_grid(rows = vars(indicator), cols = vars(type), scales = "free", switch = "y") +
+      facet_grid(rows = vars(indicator), cols = vars(type), scales = "free", switch = "y") + 
       theme(strip.text = element_markdown()) +
       scale_x_continuous(
         limits = c(0, 1),
         breaks = c(0, 0.5, 1),
         labels = c("0%", "50%", "100%"),
-        oob = scales::squish,
+        oob = scales::squish, # Squish > 100%s
         sec.axis = dup_axis()
       ) +
       
-      # Line range with ticks
-      geom_linerange(aes(xmin = 0, xmax = 1.1, y = 0), color = "#D3D3D3") +
-      geom_point(aes(x = baseline_pt_1, y = 0), shape = 3, color = "#D3D3D3") +
-      geom_point(aes(x = baseline_pt_2, y = 0), shape = 3, color = "#D3D3D3") +
-      geom_point(aes(x = baseline_pt_3, y = 0), shape = 3, color = "#D3D3D3") +
-      geom_point(aes(x = baseline_pt_4, y = 0), shape = 3, color = "#D3D3D3") +
-      geom_point(aes(x = baseline_pt_5, y = 0), shape = 3, color = "#D3D3D3") +
+      # Plot line range with ticks at 25s
+      geom_linerange(aes(xmin = 0, xmax = 1.1, y = 0), color = "#D3D3D3") + # Line on each facet
+      geom_point(aes(x = baseline_pts[1], y = 0), shape = 3, color = "#D3D3D3") + # Use plus signs as the ticks on the line
+      geom_point(aes(x = baseline_pts[2], y = 0), shape = 3, color = "#D3D3D3") +
+      geom_point(aes(x = baseline_pts[3], y = 0), shape = 3, color = "#D3D3D3") +
+      geom_point(aes(x = baseline_pts[4], y = 0), shape = 3, color = "#D3D3D3") +
+      geom_point(aes(x = baseline_pts[5], y = 0), shape = 3, color = "#D3D3D3") +
       
-      #Formatting
+      # Format plot
       si_style_nolines() +
       theme(strip.text.y.left = element_text(angle = 0, vjust = 0.5, hjust = 1),
-            axis.text.x = element_markdown(),
-            axis.text.y = element_blank(),
-            title = element_blank(),
+            axis.text.x = element_markdown(), # Keep x labels (0, 25%, etc)
+            axis.text.y = element_blank(), # Remove y axis points since are just random jitter
+            title = element_blank(), # Title to be added in AI
             panel.spacing.y = unit(1, "lines"),
             strip.placement = "outside",
-            strip.text = element_text(face = "bold", hjust = 0.5),
+            strip.text = element_text(face = "bold", hjust = 0.5), # Bold indicator and population names
             plot.margin = unit(c(0,0,0,0), "in"),
-            legend.position = "none") +
+            legend.position = "none") + # Legend to be added in AI
       coord_cartesian(clip = "off") +
       labs(x = NULL, y = NULL) +
       guides(size = "none", shape = guide_legend())  
-    
-    
-    if(export)
-      #save_png(cntry, "program", scale = 1.25, height = 3.5, width = 8.22)
     
     return(p)
     
   }
   
-  plot_program_achv_iit <- function(.data, meta, cntry, jitter_factor = 0.05, export = TRUE) {
+  plot_program_achv_iit <- function(.data, meta, cntry, jitter_factor = 0.05, missing_types) {
+    options(warn = -1)
     
-    options(warn = -1) # Suppress warnings
-    
-    # Set baseline points
+    # Set baseline points 0 5% 10%
     baseline_pts <- c(0, 0.05, 0.1)
     
-    # Filter and preprocess the data
+    # Same as previous; organize data
     df <- .data %>%
       filter(country == cntry) %>% 
       custom_jitter(jitter_factor) %>%
       mutate(
         funding_agency = factor(funding_agency, levels = c("USAID", "CDC")),
-        indicator = recode(indicator, 
-                           "vlc" = "VLC", 
-                           "iit" = "IIT", 
-                           "PMTCT_EID_Less_Equal_Two_Months" = "EID_COV\n<=2 mo", 
-                           "OVC_SERV_UNDER_18" = "OVC_SERV\n< 18"),
-        # Dynamic grid color based on type
-        grid_color = ifelse(type == "KeyPop", "#00000000", "#D3D3D3")
+        indicator = recode(indicator, "iit" = "% IIT"),
+        # If there are missing types that will be a blank in the row (i.e. KeyPop having no IIT data) 
+        # then make the line and ticks transparent color
+        grid_color = if (length(missing_types) != 0) { 
+          ifelse(type %in% missing_types, "#00000000", "#D3D3D3")
+        } else {
+          "#D3D3D3"
+        }
       )
     
+        
+    # TO DO: If data are completely missing then make blank (theme_void)
+    
     # Create the plot
-    p <- ggplot(df, aes(achievement, y_jitter)) +  # Removed global color aesthetic
+    p <- ggplot(df, aes(achievement, y_jitter)) +
       geom_blank(aes(y = -y_jitter)) +
-      geom_point(aes(color = funding_agency), na.rm = TRUE, alpha = 0.5, size = 2) +  # Funding agency color here
+      geom_point(aes(color = funding_agency), na.rm = TRUE, alpha = 0.5, size = 2) +
       scale_color_manual(values = c("USAID" = hunter, "CDC" = slate),
                          name = "Funding Agency") +
       facet_grid(rows = vars(indicator), cols = vars(type), scales = "free", switch = "y") +
       scale_x_continuous(
         limits = c(0, 0.1),
         breaks = baseline_pts,
-        labels = c("0%", "5%", "10%"),
-        oob = scales::squish
+        labels = c("0%", "5%", ">=10%"),
+        oob = scales::squish # Squish >=10%s
       ) +
       # Dynamic line range with per-facet grid color
-      geom_linerange(aes(xmin = 0, xmax = 1.1, y = 0, color = I(grid_color)), show.legend = FALSE) +
-      geom_point(aes(x = baseline_pts[1], y = 0), color = I(df$grid_color), shape = 3, show.legend = FALSE) +
+      geom_linerange(aes(xmin = 0, xmax = 1.1, y = 0, color = I(grid_color)), show.legend = FALSE) + # Line
+      geom_point(aes(x = baseline_pts[1], y = 0), color = I(df$grid_color), shape = 3, show.legend = FALSE) + #Ticks
       geom_point(aes(x = baseline_pts[2], y = 0), color = I(df$grid_color), shape = 3, show.legend = FALSE) +
       geom_point(aes(x = baseline_pts[3], y = 0), color = I(df$grid_color), shape = 3, show.legend = FALSE) +
+      
+      # Format plot same as previous
       si_style_nolines() +
       theme(
         strip.text = element_markdown(),
-        strip.text.x = element_text(color = "#00000000", face = "bold", hjust = 0.5),
+        # Color column labels transparent to keep the sizing consistent BUT remove the text
+        strip.text.x = element_text(color = "#00000000", face = "bold", hjust = 0.5), 
         strip.text.y.left = element_text(angle = 0, vjust = 0.5, hjust = 1, face = "bold"),
-        axis.text.x = element_markdown(),
+        axis.text.x = element_text(),
         axis.text.y = element_blank(),
         title = element_blank(),
         panel.spacing.y = unit(1, "lines"),
@@ -401,18 +401,8 @@
       labs(x = NULL, y = NULL) +
       guides(size = "none", shape = guide_legend())
     
-    # Export the plot if needed
-    if (export) {
-      # Uncomment the save_png function when needed
-      # save_png(cntry, "program", scale = 1.25, height = 3.5, width = 8.22)
-    }
-    
     return(p)
   }
-  
-  
-  
-  
 
 
 # COMBINE DATA ------------------------------------------------------------
@@ -443,7 +433,7 @@
     
     # Create final data frame for return in render script
     df_combo <- reduce(grid_dfs, bind_rows) %>% 
-      mutate(type = factor(type, levels = c("Total", "KeyPop", "Peds", "AGYW", "Males (15+)")),
+      mutate(type = factor(type, levels = c("Total", "AGYW", "Males (15+)", "KeyPop", "Peds")), # Reorder
              indicator = factor(indicator, levels = c("OVC_SERV_UNDER_18",
                                                       "PrEP_NEW",
                                                       "PMTCT_EID_Less_Equal_Two_Months",
@@ -454,43 +444,64 @@
     
   }
   
-
+# RUN ----------------------------------------------------------------------
+  
+  #Prep the data
   df_combo <- prep_program_data(df)
   
+  #Choose the country
+  country_select = "South Africa"
+  
+  # Split data into IIT and non-IIT and plot
+  df_iit <- df_combo %>% filter(indicator == "iit", country==country_select)
+  df_other <- df_combo %>% filter(indicator != "iit", country==country_select)
+  
+  # See what populations the country has data for
+  required_types <- unique(df_other$type)
+  count_indicators <- length(unique(df_other$indicator))
+  # Make sure there is an IIT column facet (for spacing purposes) for each population that has data
+  missing_types <- setdiff(required_types, df_iit$type)
+  
+  # If there are missing types in the IIT df, create blank rows and append them to df_iit
+  if (length(missing_types) > 0) {
+    blank_rows <- lapply(missing_types, function(type) {
+      data.frame(
+        country = country_select,
+        psnu = NA,
+        psnuuid = NA,
+        funding_agency = NA,
+        indicator = "iit",  # Set the indicator value to 'iit'
+        achievement = NA,
+        type = type,        # Use the missing type
+        y_jitter = NA,
+        stringsAsFactors = FALSE
+      )
+    })
+    
+    # Combine all of the blank rows into a single dataframe
+    blank_rows_df <- do.call(rbind, blank_rows)
+    
+    # Append the blank rows to the original dataframe
+    df_iit <- rbind(df_iit, blank_rows_df)
+  }
+  
+  # Plot the other indicators
+  plot_other <- plot_program_achv_other(df_other, meta, cntry = country_select, .05)
+  # Plot IIT
+  plot_iit <- plot_program_achv_iit(df_iit, meta, cntry = country_select, .05, missing_types = missing_types2)
+  # Combine
+  combined_plot <- plot_other / plot_iit + plot_layout(heights = c(count_indicators, 1))
+  #Print it out
+  print(combined_plot)
   #walk(v_countries, 
   #     .f = ~ plot_program_acvh(df_combo, meta, cntry = .x, jitter_factor = 0.05))
   
 
-  # Split data into IIT and non-IIT and plot
-  df_iit <- df_combo %>% filter(indicator == "iit")
-  df_other <- df_combo %>% filter(indicator != "iit")
-  
-  country_select = "South Africa"
-  # Create the blank row with the specified columns (may need to update!)
-  blank_row <- data.frame(
-    country = country_select,
-    psnu = NA,
-    psnuuid = NA,
-    funding_agency = NA,
-    indicator = "iit",  # Set the indicator value to 'iit'
-    achievement = NA,
-    type = "KeyPop", # Set the type value to 'KeyPop'
-    y_jitter = NA,
-    stringsAsFactors = FALSE
-  )
-  
-  iit_with_blank_row <- rbind(df_iit, blank_row)
-  
-  plot_other <- plot_program_achv_other(df_other, meta, cntry = country_select, .05)
-  plot_iit <- plot_program_achv_iit(iit_with_blank_row, meta, cntry = country_select, .05)
-  
-  combined_plot <- plot_other / plot_iit + plot_layout(heights = c(4, 1))
-  
-  print(combined_plot)
-  
-  
-
 # # EXPORT ----------------------------------------------------------------
 
-  
+
+  ##### TO DO ##############
+  # geom_blank / theme_void if we are missing all data or some data
+  # Test
+  # Set up exporting
 
