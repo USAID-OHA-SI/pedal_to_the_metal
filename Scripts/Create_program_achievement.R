@@ -449,7 +449,11 @@
     # Prepare the data
     df_combo <- prep_program_data(df)
     
+<<<<<<< HEAD
     # Filter data for IIT and the selected country
+=======
+    # Filter data for the selected country
+>>>>>>> efe2b7c4e7d9a022f3ab20efaa433a65f6bb015a
     df_iit <- df_combo %>% filter(indicator == "iit", country == country_select)
     df_other <- df_combo %>% filter(indicator != "iit", country == country_select)
     
@@ -492,10 +496,20 @@
     # Combine the plots
     combined_plot <- plot_other / plot_iit + plot_layout(heights = c(count_indicators, 1))
     
+<<<<<<< HEAD
     return(combined_plot)
   }
   
   print(plot_program(df, meta, "Tanzania"))
+=======
+    # Print the combined plot
+    print(combined_plot)
+    
+    return(combined_plot)
+  }
+  
+  plot_program(df, meta, "Tanzania")
+>>>>>>> efe2b7c4e7d9a022f3ab20efaa433a65f6bb015a
   
   #walk(v_countries, 
   #     .f = ~ plot_program_acvh(df_combo, meta, cntry = .x, jitter_factor = 0.05))
