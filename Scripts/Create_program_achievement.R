@@ -344,76 +344,73 @@
     
   }
   
-  ## Create strip plot ----
-  plot_program_achv_iit <- function(.data, meta, cntry, jitter_factor, export = T) {
+  plot_program_achv_iit <- function(.data, meta, cntry, jitter_factor = 0.05, export = TRUE) {
     
-    options(warn = -1)
+    options(warn = -1) # Suppress warnings
     
-    # Set axis points
-    baseline_pt_1 <- 0
-    baseline_pt_2 <- .25
-    baseline_pt_3 <- .5
-    baseline_pt_4 <- .75
-    baseline_pt_5 <- 1
+    # Set baseline points
+    baseline_pts <- c(0, 0.05, 0.1)
     
+    # Filter and preprocess the data
     df <- .data %>%
       filter(country == cntry) %>% 
-      # Adjust df for plot
-      custom_jitter(0.05) %>%
+      custom_jitter(jitter_factor) %>%
       mutate(
         funding_agency = factor(funding_agency, levels = c("USAID", "CDC")),
-        indicator = recode(indicator, "vlc" = "VLC", "iit" = "IIT", 
+        indicator = recode(indicator, 
+                           "vlc" = "VLC", 
+                           "iit" = "IIT", 
                            "PMTCT_EID_Less_Equal_Two_Months" = "EID_COV\n<=2 mo", 
-                           "OVC_SERV_UNDER_18" = "OVC_SERV\n< 18") # For display purposes
-      ) 
+                           "OVC_SERV_UNDER_18" = "OVC_SERV\n< 18"),
+        # Dynamic grid color based on type
+        grid_color = ifelse(type == "KeyPop", "#00000000", "#D3D3D3")
+      )
     
-    p <- df %>% 
-      # Plot setup
-      ggplot(aes(achievement, y_jitter, color = funding_agency)) +
+    # Create the plot
+    p <- ggplot(df, aes(achievement, y_jitter)) +  # Removed global color aesthetic
       geom_blank(aes(y = -y_jitter)) +
-      geom_point(na.rm = TRUE, alpha = .5, size = 2) + # Adjust size as needed
+      geom_point(aes(color = funding_agency), na.rm = TRUE, alpha = 0.5, size = 2) +  # Funding agency color here
       scale_color_manual(values = c("USAID" = hunter, "CDC" = slate),
                          name = "Funding Agency") +
       facet_grid(rows = vars(indicator), cols = vars(type), scales = "free", switch = "y") +
-      theme(strip.text = element_markdown()) +
       scale_x_continuous(
-        limits = c(0, .1),
-        breaks = c(0, 0.05, .1),
+        limits = c(0, 0.1),
+        breaks = baseline_pts,
         labels = c("0%", "5%", "10%"),
         oob = scales::squish
       ) +
-      
-      # Line range with ticks
-      geom_linerange(aes(xmin = 0, xmax = 1.1, y = 0), color = "#D3D3D3") +
-      geom_point(aes(x = baseline_pt_1, y = 0), shape = 3, color = "#D3D3D3") +
-      geom_point(aes(x = baseline_pt_2, y = 0), shape = 3, color = "#D3D3D3") +
-      geom_point(aes(x = baseline_pt_3, y = 0), shape = 3, color = "#D3D3D3") +
-      geom_point(aes(x = baseline_pt_4, y = 0), shape = 3, color = "#D3D3D3") +
-      geom_point(aes(x = baseline_pt_5, y = 0), shape = 3, color = "#D3D3D3") +
-      
-      #Formatting
+      # Dynamic line range with per-facet grid color
+      geom_linerange(aes(xmin = 0, xmax = 1.1, y = 0, color = I(grid_color)), show.legend = FALSE) +
+      geom_point(aes(x = baseline_pts[1], y = 0), color = I(df$grid_color), shape = 3, show.legend = FALSE) +
+      geom_point(aes(x = baseline_pts[2], y = 0), color = I(df$grid_color), shape = 3, show.legend = FALSE) +
+      geom_point(aes(x = baseline_pts[3], y = 0), color = I(df$grid_color), shape = 3, show.legend = FALSE) +
       si_style_nolines() +
-      theme(strip.text.y.left = element_text(angle = 0, vjust = 0.5, hjust = 1),
-            axis.text.x = element_markdown(),
-            axis.text.y = element_blank(),
-            title = element_blank(),
-            panel.spacing.y = unit(1, "lines"),
-            strip.placement = "outside",
-            strip.text.x = element_text(color="#00000000", face = "bold", hjust = 0.5),
-            strip.text.y = element_text(face = "bold", hjust = 0.5),
-            plot.margin = unit(c(0,0,0,0), "in"),
-            legend.position = "none") +
+      theme(
+        strip.text = element_markdown(),
+        strip.text.x = element_text(color = "#00000000", face = "bold", hjust = 0.5),
+        strip.text.y.left = element_text(angle = 0, vjust = 0.5, hjust = 1, face = "bold"),
+        axis.text.x = element_markdown(),
+        axis.text.y = element_blank(),
+        title = element_blank(),
+        panel.spacing.y = unit(1, "lines"),
+        strip.placement = "outside",
+        plot.margin = unit(c(0, 0, 0, 0), "in"),
+        legend.position = "none"
+      ) +
       coord_cartesian(clip = "off") +
       labs(x = NULL, y = NULL) +
-      guides(size = "none", shape = guide_legend())  
+      guides(size = "none", shape = guide_legend())
     
-    
-    if(export)
-      #save_png(cntry, "program", scale = 1.25, height = 3.5, width = 8.22)
+    # Export the plot if needed
+    if (export) {
+      # Uncomment the save_png function when needed
+      # save_png(cntry, "program", scale = 1.25, height = 3.5, width = 8.22)
+    }
     
     return(p)
-    
   }
+  
+  
   
   
 
@@ -460,8 +457,6 @@
 
   df_combo <- prep_program_data(df)
   
-  plot_program_achv(df_combo, meta, cntry = "Zambia", .05)
-  
   #walk(v_countries, 
   #     .f = ~ plot_program_acvh(df_combo, meta, cntry = .x, jitter_factor = 0.05))
   
@@ -479,7 +474,7 @@
     funding_agency = NA,
     indicator = "iit",  # Set the indicator value to 'iit'
     achievement = NA,
-    type = "KeyPop",
+    type = "KeyPop", # Set the type value to 'KeyPop'
     y_jitter = NA,
     stringsAsFactors = FALSE
   )
