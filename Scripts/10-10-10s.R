@@ -190,6 +190,7 @@
         mutate(adoption_level = fct_relevel(adoption_level, c("Not adopted", "Partial", "Adopted")),
                fill_color = ifelse(is.na(fill_color), grey10k, fill_color),
                indicator_order = fct_reorder(indicator_name, indicator_order, .na_rm = T)) %>% 
+        filter(adoption_level != "NA") %>% 
         ggplot(aes(x = adoption_level, y = indicator_order)) +
         geom_tile(aes(fill = fill_color), color = "white") +
         scale_fill_identity() +
@@ -215,15 +216,14 @@
         #use shapes instead of bars
         dotplot_viz_10s <- function(df, cntry, export = TRUE) {
           
-          #q <- glue::glue("THE LARGEST GAPS IN THE 10-10-10 GOALS IN {df$country}") %>% toupper
-          
           df <- df %>% 
             filter(country == cntry)
           
-          if(is.null(df) || nrow(df) == 0)
-            return(dummy_plot(q))
-          
-          ref_id <- "1b6b1dd7" #update plot identification
+          if(is.null(df) || nrow(df) == 0 || all(is.na(df$adoption_level))) {
+            v <- ggplot() + 
+                geom_blank() + 
+                theme_void() 
+            } else {
           
           v <- df %>% 
             ggplot2::ggplot(ggplot2::aes(x = 0, forcats::fct_reorder(indicator_name, indicator_order, na.rm = TRUE))) +
@@ -244,10 +244,10 @@
             ggplot2::theme(axis.text.x = ggplot2::element_blank(),
                            plot.subtitle = element_markdown(),
                            plot.margin = ggplot2::margin(0, 0, 0, 0, unit = "pt")
-                           )
+                           )}
           
-          if(export)
-            save_png(cntry, "kp", "policy", width = 2.5, height = 2.1)
+          if(export){
+            save_png(cntry, "kp", "policy", width = 2.5, height = 2.1)}
           
           return(v)
           
