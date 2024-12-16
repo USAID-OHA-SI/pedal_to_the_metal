@@ -8,14 +8,14 @@
 
 # DEPENDENCIES ------------------------------------------------------------
 
-  #remotes::install_github("USAID-OHA-SI/mindthegap", ref = "dev_edms_plot")
-  # library(mindthegap)
-  # library(googlesheets4)
-  # library(tidyverse)
-  # library(glue)
-  # library(gagglr)
+  remotes::install_github("USAID-OHA-SI/mindthegap", ref = "dev_edms_plot")
+   library(mindthegap)
+   library(googlesheets4)
+   library(tidyverse)
+   library(glue)
+   library(gagglr)
 
-# load_secrets()
+#load_secrets()
 
 
 # Functions and datasets ------------
@@ -174,7 +174,8 @@ gov_raw <- read_sheet(gov_url)
 # Calculate result/share indicators ---------
 global_1 <- global %>%  
   filter(indicator %in% c("HTS_TST", "PrEP_NEW", "TX_CURR"),
-         fiscal_year == 2024) %>%
+         fiscal_year == 2024,
+         standardizeddisaggregate == "Total Numerator") %>%
     select(operatingunit, country, indicator, funding_agency, standardizeddisaggregate, cumulative)
   
   agency_totals <- global_1 %>%
