@@ -114,6 +114,12 @@
       df <- df %>% 
         filter(country == cntry, !(sex == "All" & age == "15+")) 
       
+      if(is.null(df) || nrow(df) == 0 || all(is.na(df$estimate))) {
+        v <- ggplot() + 
+          geom_blank() + 
+          theme_void() 
+      } else {
+      
       v <- df %>% ggplot(aes(x = share, y = indic_age_sex, color = stroke_color)) + 
       geom_vline(xintercept = 0.95, linetype = "dashed", color = slate) +
       geom_segment(aes( x = .95, xend = share, yend = indic_age_sex),
@@ -135,7 +141,7 @@
             plot.margin = ggplot2::margin(0, 0, 0, 0, unit = "pt")) +
       labs(x = NULL, y = NULL
            # title = glue("KEY EPIDEMIOLOGICAL GAPS")
-      ) 
+      ) }
       
       if(export)
         save_png(cntry, "epi", "gaps", scale = 1.2, width = 2.66, height = 1.83)
