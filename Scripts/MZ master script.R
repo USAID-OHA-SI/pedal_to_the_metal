@@ -88,7 +88,7 @@ gov_raw <- read_sheet(gov_url)
   fin_FY23 <- fin_FY23 %>%
     mutate(fundingagency2 = case_when(str_detect(funding_agency, "USAID") ~ "USAID",
                                       TRUE ~ funding_agency))
-  
+  table(fin_FY23$targeted_beneficiary)
   ## find Above site programming cost ------
   
   fin_FY23_USAID_ASP <- fin_FY23 %>%
@@ -113,6 +113,17 @@ gov_raw <- read_sheet(gov_url)
   
   fin_FY23_USAID_OVC_2$ovc <- clean_number(fin_FY23_USAID_OVC_2$ovc)
   
+  ## find Key Pops programming cost ------
+  
+  fin_FY23_USAID_KP <- fin_FY23 %>%
+    filter(fundingagency2 == "USAID",
+           targeted_beneficiary == "Key Populations")
+  
+  fin_FY23_USAID_KP_2 <- fin_FY23_USAID_KP %>%
+    group_by(country) %>%
+    summarise(kp = sum(cop_budget_total))
+  
+  fin_FY23_USAID_KP_2$kp <- clean_number(fin_FY23_USAID_KP_2$kp)
   
   ## find DREAMS data with comprehensive dataset ----------
   
@@ -168,7 +179,8 @@ gov_raw <- read_sheet(gov_url)
   budget_table <- country_budget %>%
     full_join(comp_dreams2) %>%
     full_join(fin_FY23_USAID_OVC_2) %>%
-    full_join(fin_FY23_USAID_ASP_2)
+    full_join(fin_FY23_USAID_ASP_2) %>%
+    full_join(fin_FY23_USAID_KP_2)
   
 
 # Calculate result/share indicators ---------
