@@ -350,8 +350,8 @@ global_1 <- global %>%
                                h_exp > 15 ~ "Optimal")) %>%
     select(!c(year, country)) %>%
     rename(country_iso = SpatialDimValueCode)
-  gov$h_exp <- ifelse(!is.na(gov$h_exp), paste0(gov$h_exp, "%"), NA)
-  
+ 
+   gov$h_exp <- ifelse(!is.na(gov$h_exp), paste0(gov$h_exp, "%"), NA)
   
 # Create sustainability table ----------
   sus1 <- pepfar_short %>%
@@ -413,4 +413,7 @@ global_1 <- global %>%
   df <- df %>%
     select(country, country_iso, everything()) %>%
     filter(country %ni% c("Brazil", "Peru", "Trinidad and Tobago"))
+  
+  
+  
   
